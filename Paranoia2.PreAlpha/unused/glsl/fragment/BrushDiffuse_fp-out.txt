@@ -1,0 +1,56 @@
+#version 130
+uniform sampler2D u_ColorMap;
+uniform sampler2D u_BaseLightMap;
+uniform sampler2D u_AddLightMap;
+uniform sampler2D u_DeluxeMap;
+uniform sampler2D u_NormalMap;
+uniform sampler2D u_GlossMap;
+uniform sampler2D u_DetailMap;
+uniform int u_FaceFlags;
+uniform int u_DetailMode;
+uniform int u_BumpMode;
+uniform float u_GlossExponent;
+in vec2 var_TexDiffuse;
+in vec2 var_TexLight;
+in vec2 var_TexDetail;
+in vec3 var_ViewDir;
+void main ()
+{
+  vec4 diffuse_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture (u_ColorMap, var_TexDiffuse);
+  diffuse_1 = tmpvar_2;
+  if ((bool((u_FaceFlags & 1)) && (tmpvar_2.w <= 0.5))) {
+    discard;
+    return;
+  };
+  vec4 tmpvar_3;
+  tmpvar_3 = texture (u_BaseLightMap, var_TexLight);
+  if (((u_DetailMode > 0) && bool((u_FaceFlags & 4)))) {
+    diffuse_1.xyz = (tmpvar_2.xyz * (texture (u_DetailMap, var_TexDetail).xyz * 2.0));
+  };
+  if ((u_BumpMode > 0)) {
+    vec3 tmpvar_4;
+    tmpvar_4 = normalize((2.0 * (texture (u_DeluxeMap, var_TexLight).xyz - 0.5)));
+    vec3 tmpvar_5;
+    tmpvar_5 = normalize((2.0 * (texture (u_NormalMap, var_TexDiffuse).xyz - 0.5)));
+    vec3 tmpvar_6;
+    tmpvar_6 = (texture (u_AddLightMap, var_TexLight).xyz * max (dot (tmpvar_5, tmpvar_4), 0.0));
+    diffuse_1.xyz = (diffuse_1.xyz * (tmpvar_3.xyz + tmpvar_6));
+    if ((u_BumpMode > 1)) {
+      vec3 I_7;
+      I_7 = -(tmpvar_4);
+      diffuse_1.xyz = (diffuse_1.xyz + ((texture (u_GlossMap, var_TexDiffuse).xyz * tmpvar_6) * pow (
+        max (dot ((I_7 - (2.0 * 
+          (dot (tmpvar_5, I_7) * tmpvar_5)
+        )), normalize(var_ViewDir)), 0.0)
+      , u_GlossExponent)));
+    };
+  } else {
+    diffuse_1.xyz = (diffuse_1.xyz * tmpvar_3.xyz);
+  };
+  gl_FragColor = (diffuse_1 * 2.0);
+}
+
+
+// inputs: 4, stats: 37 alu 8 tex 5 flow

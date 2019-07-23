@@ -1,0 +1,523 @@
+#version 130
+uniform sampler2D u_ProjectMap;
+uniform sampler1D u_AttnZMap;
+uniform sampler2D u_ColorMap;
+uniform sampler2D u_NormalMap;
+uniform sampler2D u_GlossMap;
+uniform sampler2D u_DepthMap;
+uniform sampler2DShadow u_ShadowMap;
+uniform vec3 u_LightDiffuse;
+uniform int u_FaceFlags;
+uniform int u_PointLight;
+uniform int u_ShadowMode;
+uniform int u_ParallaxMode;
+uniform vec2 u_ParallaxScale;
+uniform int u_ParallaxSteps;
+uniform float u_GlossExponent;
+uniform float u_ScreenWidth;
+uniform float u_ScreenHeight;
+in vec2 var_TexCoord;
+in mat3 var_OS2TSMatrix;
+in vec3 var_ViewDir;
+in vec3 var_LightDir;
+float ComputeShadow ()
+{
+  if ((((u_ShadowMode == 0) || bool(
+    (u_FaceFlags & 4)
+  )) || bool(u_PointLight))) {
+    return 1.0;
+  } else {
+    float shadow0_1;
+    vec3 coord_2;
+    float dtH_3;
+    float dtW_4;
+    float tmpvar_5;
+    tmpvar_5 = (1.0 / u_ScreenWidth);
+    dtW_4 = tmpvar_5;
+    float tmpvar_6;
+    tmpvar_6 = (1.0 / u_ScreenHeight);
+    dtH_3 = tmpvar_6;
+    vec3 tmpvar_7;
+    tmpvar_7 = (gl_TexCoord[2].xyz / gl_TexCoord[2].w).xyz;
+    vec3 tmpvar_8;
+    tmpvar_8 = tmpvar_7;
+    coord_2 = tmpvar_8;
+    float tmpvar_9;
+    tmpvar_9 = clamp (coord_2.x, dtW_4, (1.0 - dtW_4));
+    float tmpvar_10;
+    tmpvar_10 = tmpvar_9;
+    coord_2.x = tmpvar_10;
+    float tmpvar_11;
+    tmpvar_11 = clamp (coord_2.y, dtH_3, (1.0 - dtH_3));
+    float tmpvar_12;
+    tmpvar_12 = tmpvar_11;
+    coord_2.y = vec2(tmpvar_12).y;
+    float tmpvar_13;
+    tmpvar_13 = clamp (coord_2.x, 0.0, 1.0);
+    float tmpvar_14;
+    tmpvar_14 = tmpvar_13;
+    coord_2.x = tmpvar_14;
+    vec4 tmpvar_15;
+    tmpvar_15 = shadow2D (u_ShadowMap, coord_2);
+    float tmpvar_16;
+    tmpvar_16 = tmpvar_15.x;
+    shadow0_1 = tmpvar_16;
+    if ((u_ShadowMode > 1)) {
+      float shadow3_17;
+      float shadow2_18;
+      float shadow1_19;
+      vec3 coord2_20;
+      vec3 tmpvar_21;
+      tmpvar_21.xz = vec2(0.0, 0.0);
+      tmpvar_21.y = dtH_3;
+      vec3 tmpvar_22;
+      tmpvar_22 = (coord_2 + tmpvar_21);
+      coord2_20 = tmpvar_22;
+      vec4 tmpvar_23;
+      tmpvar_23 = shadow2D (u_ShadowMap, coord2_20);
+      float tmpvar_24;
+      tmpvar_24 = tmpvar_23.x;
+      shadow1_19 = tmpvar_24;
+      vec3 tmpvar_25;
+      tmpvar_25.z = 0.0;
+      tmpvar_25.x = dtW_4;
+      tmpvar_25.y = dtH_3;
+      vec3 tmpvar_26;
+      tmpvar_26 = (coord_2 + tmpvar_25);
+      coord2_20 = tmpvar_26;
+      vec4 tmpvar_27;
+      tmpvar_27 = shadow2D (u_ShadowMap, coord2_20);
+      float tmpvar_28;
+      tmpvar_28 = tmpvar_27.x;
+      shadow2_18 = tmpvar_28;
+      vec3 tmpvar_29;
+      tmpvar_29.yz = vec2(0.0, 0.0);
+      tmpvar_29.x = dtW_4;
+      vec3 tmpvar_30;
+      tmpvar_30 = (coord_2 + tmpvar_29);
+      coord2_20 = tmpvar_30;
+      vec4 tmpvar_31;
+      tmpvar_31 = shadow2D (u_ShadowMap, coord2_20);
+      float tmpvar_32;
+      tmpvar_32 = tmpvar_31.x;
+      shadow3_17 = tmpvar_32;
+      if ((u_ShadowMode > 2)) {
+        float shadow8_33;
+        float shadow7_34;
+        float shadow6_35;
+        float shadow5_36;
+        float shadow4_37;
+        vec3 tmpvar_38;
+        tmpvar_38.yz = vec2(0.0, 0.0);
+        tmpvar_38.x = -(dtW_4);
+        vec3 tmpvar_39;
+        tmpvar_39 = (coord_2 + tmpvar_38);
+        coord2_20 = tmpvar_39;
+        vec4 tmpvar_40;
+        tmpvar_40 = shadow2D (u_ShadowMap, coord2_20);
+        float tmpvar_41;
+        tmpvar_41 = tmpvar_40.x;
+        shadow4_37 = tmpvar_41;
+        vec3 tmpvar_42;
+        tmpvar_42.z = 0.0;
+        tmpvar_42.x = -(dtW_4);
+        tmpvar_42.y = -(dtH_3);
+        vec3 tmpvar_43;
+        tmpvar_43 = (coord_2 + tmpvar_42);
+        coord2_20 = tmpvar_43;
+        vec4 tmpvar_44;
+        tmpvar_44 = shadow2D (u_ShadowMap, coord2_20);
+        float tmpvar_45;
+        tmpvar_45 = tmpvar_44.x;
+        shadow5_36 = tmpvar_45;
+        vec3 tmpvar_46;
+        tmpvar_46.xz = vec2(0.0, 0.0);
+        tmpvar_46.y = -(dtH_3);
+        vec3 tmpvar_47;
+        tmpvar_47 = (coord_2 + tmpvar_46);
+        coord2_20 = tmpvar_47;
+        vec4 tmpvar_48;
+        tmpvar_48 = shadow2D (u_ShadowMap, coord2_20);
+        float tmpvar_49;
+        tmpvar_49 = tmpvar_48.x;
+        shadow6_35 = tmpvar_49;
+        vec3 tmpvar_50;
+        tmpvar_50.z = 0.0;
+        tmpvar_50.x = dtW_4;
+        tmpvar_50.y = -(dtH_3);
+        vec3 tmpvar_51;
+        tmpvar_51 = (coord_2 + tmpvar_50);
+        coord2_20 = tmpvar_51;
+        vec4 tmpvar_52;
+        tmpvar_52 = shadow2D (u_ShadowMap, coord2_20);
+        float tmpvar_53;
+        tmpvar_53 = tmpvar_52.x;
+        shadow7_34 = tmpvar_53;
+        vec3 tmpvar_54;
+        tmpvar_54.z = 0.0;
+        tmpvar_54.x = -(dtW_4);
+        tmpvar_54.y = dtH_3;
+        vec3 tmpvar_55;
+        tmpvar_55 = (coord_2 + tmpvar_54);
+        coord2_20 = tmpvar_55;
+        vec4 tmpvar_56;
+        tmpvar_56 = shadow2D (u_ShadowMap, coord2_20);
+        float tmpvar_57;
+        tmpvar_57 = tmpvar_56.x;
+        shadow8_33 = tmpvar_57;
+        return (((
+          ((((
+            ((shadow0_1 + shadow1_19) + shadow2_18)
+           + shadow3_17) + shadow4_37) + shadow5_36) + shadow6_35)
+         + shadow7_34) + shadow8_33) * 0.11);
+      } else {
+        return (((
+          (shadow0_1 + shadow1_19)
+         + shadow2_18) + shadow3_17) * 0.25);
+      };
+    } else {
+      return shadow0_1;
+    };
+  };
+}
+
+float CalcHeight (
+  in vec2 texCoord_58
+)
+{
+  vec4 tmpvar_59;
+  tmpvar_59 = texture2D (u_DepthMap, texCoord_58);
+  return tmpvar_59.x;
+}
+
+vec2 CalcParallaxOffset (
+  in vec2 texCoord_60,
+  in vec3 viewVec_61
+)
+{
+  if ((u_ParallaxMode > 1)) {
+    int i_62;
+    vec4 intersect_63;
+    float delta0_64;
+    float delta1_65;
+    float t0_66;
+    float t1_67;
+    float error_68;
+    vec2 offsetBest_69;
+    int i_70;
+    float NB1_71;
+    vec2 offset_72;
+    float height_73;
+    float NB0_74;
+    vec2 delta_75;
+    float step_76;
+    float tmpvar_77;
+    tmpvar_77 = (1.0 / float(u_ParallaxSteps));
+    step_76 = tmpvar_77;
+    vec2 tmpvar_78;
+    tmpvar_78 = (((2.0 * u_ParallaxScale) * viewVec_61.xy) / (-(viewVec_61.z) * float(u_ParallaxSteps)));
+    delta_75 = tmpvar_78;
+    float tmpvar_79;
+    tmpvar_79 = CalcHeight (texCoord_60);
+    float tmpvar_80;
+    tmpvar_80 = tmpvar_79;
+    NB0_74 = tmpvar_80;
+    float tmpvar_81;
+    tmpvar_81 = (1.0 - step_76);
+    height_73 = tmpvar_81;
+    vec2 tmpvar_82;
+    tmpvar_82 = (texCoord_60 + delta_75);
+    offset_72 = tmpvar_82;
+    float tmpvar_83;
+    tmpvar_83 = CalcHeight (offset_72);
+    float tmpvar_84;
+    tmpvar_84 = tmpvar_83;
+    NB1_71 = tmpvar_84;
+    int tmpvar_85;
+    tmpvar_85 = 0;
+    i_70 = tmpvar_85;
+    while (true) {
+      if (!((i_70 < u_ParallaxSteps))) {
+        break;
+      };
+      if ((NB1_71 >= height_73)) {
+        break;
+      };
+      float tmpvar_86;
+      tmpvar_86 = NB1_71;
+      NB0_74 = tmpvar_86;
+      float tmpvar_87;
+      tmpvar_87 = (height_73 - step_76);
+      height_73 = tmpvar_87;
+      vec2 tmpvar_88;
+      tmpvar_88 = (offset_72 + delta_75);
+      offset_72 = tmpvar_88;
+      float tmpvar_89;
+      tmpvar_89 = CalcHeight (offset_72);
+      float tmpvar_90;
+      tmpvar_90 = tmpvar_89;
+      NB1_71 = tmpvar_90;
+      int _post_incdec_tmp_91;
+      _post_incdec_tmp_91 = i_70;
+      int tmpvar_92;
+      tmpvar_92 = (i_70 + 1);
+      i_70 = tmpvar_92;
+    };
+    vec2 tmpvar_93;
+    tmpvar_93 = offset_72;
+    offsetBest_69 = tmpvar_93;
+    float tmpvar_94;
+    tmpvar_94 = 1.0;
+    error_68 = tmpvar_94;
+    float tmpvar_95;
+    tmpvar_95 = height_73;
+    t1_67 = tmpvar_95;
+    float tmpvar_96;
+    tmpvar_96 = (t1_67 + step_76);
+    t0_66 = tmpvar_96;
+    float tmpvar_97;
+    tmpvar_97 = (t1_67 - NB1_71);
+    delta1_65 = tmpvar_97;
+    float tmpvar_98;
+    tmpvar_98 = (t0_66 - NB0_74);
+    delta0_64 = tmpvar_98;
+    vec4 tmpvar_99;
+    tmpvar_99.xy = (delta_75 * float(u_ParallaxSteps)).xy;
+    tmpvar_99.zw = ((delta_75 * float(u_ParallaxSteps)) + texCoord_60).xy;
+    vec4 tmpvar_100;
+    tmpvar_100 = tmpvar_99;
+    intersect_63 = tmpvar_100;
+    int tmpvar_101;
+    tmpvar_101 = 0;
+    i_62 = tmpvar_101;
+    while (true) {
+      float NB_102;
+      float t_103;
+      float denom_104;
+      if (!((i_62 < 10))) {
+        break;
+      };
+      float tmpvar_105;
+      tmpvar_105 = abs (error_68);
+      if ((tmpvar_105 <= 0.01)) {
+        break;
+      };
+      float tmpvar_106;
+      tmpvar_106 = (delta1_65 - delta0_64);
+      denom_104 = tmpvar_106;
+      float tmpvar_107;
+      tmpvar_107 = (((t0_66 * delta1_65) - (t1_67 * delta0_64)) / denom_104);
+      t_103 = tmpvar_107;
+      vec2 tmpvar_108;
+      tmpvar_108 = ((-(t_103) * intersect_63.xy) + intersect_63.zw);
+      offsetBest_69 = tmpvar_108;
+      float tmpvar_109;
+      tmpvar_109 = CalcHeight (offsetBest_69);
+      float tmpvar_110;
+      tmpvar_110 = tmpvar_109;
+      NB_102 = tmpvar_110;
+      float tmpvar_111;
+      tmpvar_111 = (t_103 - NB_102);
+      error_68 = tmpvar_111;
+      if ((error_68 < 0.0)) {
+        float tmpvar_112;
+        tmpvar_112 = error_68;
+        delta1_65 = tmpvar_112;
+        float tmpvar_113;
+        tmpvar_113 = t_103;
+        t1_67 = tmpvar_113;
+      } else {
+        float tmpvar_114;
+        tmpvar_114 = error_68;
+        delta0_64 = tmpvar_114;
+        float tmpvar_115;
+        tmpvar_115 = t_103;
+        t0_66 = tmpvar_115;
+      };
+      int _post_incdec_tmp_116;
+      _post_incdec_tmp_116 = i_62;
+      int tmpvar_117;
+      tmpvar_117 = (i_62 + 1);
+      i_62 = tmpvar_117;
+    };
+    return offsetBest_69;
+  } else {
+    float offset_118;
+    vec4 tmpvar_119;
+    tmpvar_119 = texture2D (u_DepthMap, texCoord_60);
+    float tmpvar_120;
+    tmpvar_120 = ((tmpvar_119.x * 0.04) - 0.02);
+    offset_118 = tmpvar_120;
+    return ((offset_118 * viewVec_61.xy) + texCoord_60);
+  };
+}
+
+void main ()
+{
+  vec4 diffuse_121;
+  float maxLight_122;
+  vec3 light_123;
+  vec2 texcoord_124;
+  vec3 specular_125;
+  vec3 tmpvar_126;
+  tmpvar_126 = vec3(0.0, 0.0, 0.0);
+  specular_125 = tmpvar_126;
+  vec2 tmpvar_127;
+  tmpvar_127 = var_TexCoord;
+  texcoord_124 = tmpvar_127;
+  if (bool((u_FaceFlags & 4))) {
+    vec3 tmpvar_128;
+    tmpvar_128 = vec3(1.0, 1.0, 1.0);
+    light_123 = tmpvar_128;
+  } else {
+    if (bool((u_FaceFlags & 1))) {
+      vec3 tmpvar_129;
+      tmpvar_129 = (u_LightDiffuse * 0.8);
+      light_123 = tmpvar_129;
+    } else {
+      vec3 N_130;
+      vec3 L_131;
+      vec3 V_132;
+      if (bool(u_PointLight)) {
+        vec3 tmpvar_133;
+        tmpvar_133 = u_LightDiffuse;
+        light_123 = tmpvar_133;
+        vec4 tmpvar_134;
+        tmpvar_134 = texture2D (u_ProjectMap, gl_TexCoord[0].xy);
+        vec3 tmpvar_135;
+        tmpvar_135 = (light_123 * (1.0 - tmpvar_134.w));
+        light_123 = tmpvar_135;
+        vec4 tmpvar_136;
+        tmpvar_136 = texture1D (u_AttnZMap, gl_TexCoord[1].x);
+        vec3 tmpvar_137;
+        tmpvar_137 = (light_123 * (1.0 - tmpvar_136.w));
+        light_123 = tmpvar_137;
+      } else {
+        vec4 tmpvar_138;
+        tmpvar_138 = texture2DProj (u_ProjectMap, gl_TexCoord[0]);
+        vec3 tmpvar_139;
+        tmpvar_139 = (tmpvar_138.xyz * u_LightDiffuse);
+        light_123 = tmpvar_139;
+        vec4 tmpvar_140;
+        tmpvar_140 = texture1D (u_AttnZMap, gl_TexCoord[1].x);
+        vec3 tmpvar_141;
+        tmpvar_141 = (light_123 * tmpvar_140.x);
+        light_123 = tmpvar_141;
+      };
+      vec3 tmpvar_142;
+      tmpvar_142 = normalize (var_ViewDir);
+      vec3 tmpvar_143;
+      tmpvar_143 = tmpvar_142;
+      V_132 = tmpvar_143;
+      vec3 tmpvar_144;
+      tmpvar_144 = normalize (var_LightDir);
+      vec3 tmpvar_145;
+      tmpvar_145 = tmpvar_144;
+      L_131 = tmpvar_145;
+      vec2 tmpvar_146;
+      tmpvar_146 = CalcParallaxOffset (var_TexCoord, V_132);
+      vec2 tmpvar_147;
+      tmpvar_147 = tmpvar_146;
+      texcoord_124 = tmpvar_147;
+      vec4 tmpvar_148;
+      tmpvar_148 = texture2D (u_NormalMap, texcoord_124);
+      vec3 tmpvar_149;
+      tmpvar_149 = normalize ((2.0 * (tmpvar_148.xyz - 0.5)));
+      vec3 tmpvar_150;
+      tmpvar_150 = tmpvar_149;
+      N_130 = tmpvar_150;
+      vec4 tmpvar_151;
+      tmpvar_151 = texture2D (u_GlossMap, texcoord_124);
+      vec3 tmpvar_152;
+      tmpvar_152 = (tmpvar_151.xyz * light_123);
+      specular_125 = tmpvar_152;
+      vec3 tmpvar_153;
+      tmpvar_153 = reflect (-(L_131), N_130);
+      float tmpvar_154;
+      tmpvar_154 = dot (tmpvar_153, V_132);
+      float tmpvar_155;
+      tmpvar_155 = max (tmpvar_154, 0.0);
+      float tmpvar_156;
+      tmpvar_156 = pow (tmpvar_155, u_GlossExponent);
+      vec3 tmpvar_157;
+      tmpvar_157 = (specular_125 * tmpvar_156);
+      specular_125 = tmpvar_157;
+      float tmpvar_158;
+      tmpvar_158 = dot (N_130, L_131);
+      float tmpvar_159;
+      tmpvar_159 = max (tmpvar_158, 0.0);
+      vec3 tmpvar_160;
+      tmpvar_160 = (light_123 * tmpvar_159);
+      light_123 = tmpvar_160;
+      if ((bool(u_PointLight) == bool(0))) {
+        vec4 tmpvar_161;
+        tmpvar_161 = shadow2DProj (u_ShadowMap, gl_TexCoord[2]);
+        vec3 tmpvar_162;
+        tmpvar_162 = (light_123 * tmpvar_161.x);
+        light_123 = tmpvar_162;
+      };
+    };
+  };
+  float tmpvar_163;
+  tmpvar_163 = max (0.0, light_123.x);
+  float tmpvar_164;
+  tmpvar_164 = tmpvar_163;
+  light_123.x = tmpvar_164;
+  float tmpvar_165;
+  tmpvar_165 = max (0.0, light_123.y);
+  float tmpvar_166;
+  tmpvar_166 = tmpvar_165;
+  light_123.y = vec2(tmpvar_166).y;
+  float tmpvar_167;
+  tmpvar_167 = max (0.0, light_123.z);
+  float tmpvar_168;
+  tmpvar_168 = tmpvar_167;
+  light_123.z = vec3(tmpvar_168).z;
+  float tmpvar_169;
+  tmpvar_169 = max (light_123.y, light_123.z);
+  float tmpvar_170;
+  tmpvar_170 = max (light_123.x, tmpvar_169);
+  float tmpvar_171;
+  tmpvar_171 = tmpvar_170;
+  maxLight_122 = tmpvar_171;
+  if ((maxLight_122 > 1.0)) {
+    vec3 tmpvar_172;
+    tmpvar_172 = (light_123 * (1.0 / maxLight_122));
+    light_123 = tmpvar_172;
+  };
+  vec4 tmpvar_173;
+  tmpvar_173 = texture2D (u_ColorMap, texcoord_124);
+  vec4 tmpvar_174;
+  tmpvar_174 = tmpvar_173;
+  diffuse_121 = tmpvar_174;
+  float tmpvar_175;
+  tmpvar_175 = ComputeShadow ();
+  vec3 tmpvar_176;
+  tmpvar_176 = (light_123 * tmpvar_175);
+  light_123 = tmpvar_176;
+  vec3 tmpvar_177;
+  tmpvar_177 = (diffuse_121.xyz * light_123);
+  diffuse_121.xyz = tmpvar_177.xyz.xyz;
+  vec3 tmpvar_178;
+  tmpvar_178 = (diffuse_121.xyz + specular_125);
+  diffuse_121.xyz = tmpvar_178.xyz.xyz;
+  if ((bool((u_FaceFlags & 64)) && (diffuse_121.w <= 0.5))) {
+    discard;
+    return;
+  };
+  if (bool((u_FaceFlags & 32))) {
+    float tmpvar_179;
+    tmpvar_179 = 0.5;
+    diffuse_121.w = vec4(tmpvar_179).w;
+  };
+  vec3 tmpvar_180;
+  tmpvar_180 = (diffuse_121.xyz * light_123.xyz);
+  diffuse_121.xyz = tmpvar_180.xyz.xyz;
+  vec3 tmpvar_181;
+  tmpvar_181 = (diffuse_121.xyz * 2.0);
+  diffuse_121.xyz = tmpvar_181.xyz.xyz;
+  vec4 tmpvar_182;
+  tmpvar_182 = diffuse_121;
+  gl_FragColor = tmpvar_182;
+}
+

@@ -1,0 +1,76 @@
+#version 130
+in vec3 attr_Position;
+in vec2 attr_TexCoord0;
+in vec3 attr_Normal;
+in vec3 attr_Tangent;
+in vec3 attr_Binormal;
+in float attr_BoneIndexes;
+uniform mat4 u_WorldViewProjectionMatrix;
+uniform mat4 u_BoneMatrix[128];
+uniform vec3 u_LightDir;
+uniform vec3 u_ViewOrigin;
+uniform vec3 u_ViewRight;
+uniform int u_FaceFlags;
+out vec2 var_TexCoord;
+out mat3 var_OS2TSMatrix;
+out vec3 var_ViewDir;
+out vec3 var_LightDir;
+void main ()
+{
+  vec4 position_1;
+  position_1.w = 1.0;
+  mat4 tmpvar_2;
+  tmpvar_2 = u_BoneMatrix[int(attr_BoneIndexes)];
+  vec4 tmpvar_3;
+  tmpvar_3.w = 1.0;
+  tmpvar_3.xyz = attr_Position;
+  position_1.xyz = (tmpvar_2 * tmpvar_3).xyz;
+  vec4 tmpvar_4;
+  tmpvar_4.w = 0.0;
+  tmpvar_4.xyz = attr_Normal;
+  vec3 tmpvar_5;
+  tmpvar_5 = (tmpvar_2 * tmpvar_4).xyz;
+  vec4 tmpvar_6;
+  tmpvar_6.w = 0.0;
+  tmpvar_6.xyz = attr_Tangent;
+  vec3 tmpvar_7;
+  tmpvar_7 = (tmpvar_2 * tmpvar_6).xyz;
+  vec4 tmpvar_8;
+  tmpvar_8.w = 0.0;
+  tmpvar_8.xyz = attr_Binormal;
+  vec3 tmpvar_9;
+  tmpvar_9 = (tmpvar_2 * tmpvar_8).xyz;
+  mat3 tmpvar_10;
+  tmpvar_10[0].x = tmpvar_7.x;
+  tmpvar_10[0].y = tmpvar_9.x;
+  tmpvar_10[0].z = tmpvar_5.x;
+  tmpvar_10[1].x = tmpvar_7.y;
+  tmpvar_10[1].y = tmpvar_9.y;
+  tmpvar_10[1].z = tmpvar_5.y;
+  tmpvar_10[2].x = tmpvar_7.z;
+  tmpvar_10[2].y = tmpvar_9.z;
+  tmpvar_10[2].z = tmpvar_5.z;
+  var_OS2TSMatrix = tmpvar_10;
+  gl_Position = (u_WorldViewProjectionMatrix * position_1);
+  var_ViewDir = (tmpvar_10 * (u_ViewOrigin - position_1.xyz));
+  var_LightDir = (tmpvar_10 * u_LightDir);
+  if (bool((u_FaceFlags & 2))) {
+    vec3 tmpvar_11;
+    tmpvar_11 = normalize((-(u_ViewOrigin) + tmpvar_2[3].xyz));
+    vec3 b_12;
+    b_12 = -(u_ViewRight);
+    vec3 tmpvar_13;
+    tmpvar_13 = normalize(((tmpvar_11.yzx * b_12.zxy) - (tmpvar_11.zxy * b_12.yzx)));
+    var_TexCoord.x = (((
+      dot (tmpvar_5, normalize(((tmpvar_11.yzx * tmpvar_13.zxy) - (tmpvar_11.zxy * tmpvar_13.yzx))))
+     + 1.0) * 32.0) * attr_TexCoord0.x);
+    var_TexCoord.y = (((
+      dot (tmpvar_5, -(tmpvar_13))
+     + 1.0) * 32.0) * attr_TexCoord0.y);
+  } else {
+    var_TexCoord = attr_TexCoord0;
+  };
+}
+
+
+// inputs: 6, stats: 37 alu 0 tex 1 flow

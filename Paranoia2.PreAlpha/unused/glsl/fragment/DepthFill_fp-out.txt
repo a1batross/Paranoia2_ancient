@@ -1,0 +1,21 @@
+#version 130
+uniform sampler2D u_ColorMap;
+uniform int u_FaceFlags;
+in vec2 var_TexCoord;
+void main ()
+{
+  bool tmpvar_1;
+  if (bool((u_FaceFlags & 64))) {
+    tmpvar_1 = (texture (u_ColorMap, var_TexCoord).w <= 0.5);
+  } else {
+    tmpvar_1 = bool(0);
+  };
+  if (tmpvar_1) {
+    discard;
+    return;
+  };
+  gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+}
+
+
+// inputs: 1, stats: 5 alu 2 tex 3 flow

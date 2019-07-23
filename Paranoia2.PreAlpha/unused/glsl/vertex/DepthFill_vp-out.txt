@@ -1,0 +1,25 @@
+attribute vec3 attr_Position;
+attribute vec2 attr_TexCoord0;
+attribute float attr_BoneIndexes;
+uniform mat4 u_WorldViewProjectionMatrix;
+uniform mat4 u_BoneMatrix[128];
+uniform int u_StudioModel;
+varying vec2 var_TexCoord;
+void main ()
+{
+  vec4 position_1;
+  position_1 = vec4(0.0, 0.0, 0.0, 1.0);
+  if (bool(u_StudioModel)) {
+    vec4 tmpvar_2;
+    tmpvar_2.w = 1.0;
+    tmpvar_2.xyz = attr_Position;
+    position_1.xyz = (u_BoneMatrix[int(attr_BoneIndexes)] * tmpvar_2).xyz;
+  } else {
+    position_1.xyz = attr_Position;
+  };
+  gl_Position = (u_WorldViewProjectionMatrix * position_1);
+  var_TexCoord = attr_TexCoord0;
+}
+
+
+// inputs: 3, stats: 6 alu 0 tex 1 flow

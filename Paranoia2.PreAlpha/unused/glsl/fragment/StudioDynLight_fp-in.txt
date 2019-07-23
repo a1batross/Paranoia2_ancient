@@ -1,0 +1,167 @@
+/*
+StudioDynLight_fp.glsl - directional and omnidirectional lighting program
+Copyright (C) 2014 Uncle Mike
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+*/
+
+#version 130
+
+#define STUDIO_NF_FLATSHADE		1
+#define STUDIO_NF_CHROME		2
+#define STUDIO_NF_FULLBRIGHT		4
+#define STUDIO_NF_COLORMAP		8	// can changed by colormap command
+#define STUDIO_NF_BLENDED		16	// rendering as semiblended
+#define STUDIO_NF_ADDITIVE		32	// rendering with additive mode
+#define STUDIO_NF_TRANSPARENT		64	// use texture with alpha channel
+
+uniform sampler2D		u_ProjectMap;
+uniform sampler1D		u_AttnZMap;
+uniform sampler2D		u_ColorMap;
+uniform sampler2DShadow	u_ShadowMap;
+
+uniform vec3		u_LightDiffuse;
+uniform int		u_FaceFlags;
+uniform int		u_PointLight;
+uniform int		u_ShadowMode;
+uniform float		u_ScreenWidth;	// shadowmap width
+uniform float		u_ScreenHeight;	// shadowmap height
+
+varying float		var_LightCos;
+varying vec2		var_TexCoord;
+varying vec4		var_ProjCoord[3];
+
+#define u_AttnXYMap		u_ProjectMap	// just for consistency
+
+// remap a value in the range [A,B] to [C,D].
+float RemapVal( float val, float A, float B, float C, float D )
+{
+	return C + (D - C) * (val - A) / (B - A);
+}
+
+float ComputeShadow( void )
+{
+	if( u_ShadowMode == 0 || bool( u_FaceFlags & STUDIO_NF_FULLBRIGHT ) || bool( u_PointLight ))
+	{
+		// no shadows
+		return 1.0;
+	}
+	else
+	{
+		float dtW  = 1.0 / u_ScreenWidth;
+		float dtH  = 1.0 / u_ScreenHeight;
+		vec3 coord = vec3( var_ProjCoord[2].xyz / var_ProjCoord[2].w );
+
+		coord.s = float( clamp( float( coord.s ), dtW, 1.0 - dtW ));
+		coord.t = float( clamp( float( coord.t ), dtH, 1.0 - dtH ));
+		coord.r = float( clamp( float( coord.r ), 0.0, 1.0 ));
+
+		float shadow0 = float( shadow2D( u_ShadowMap, coord ).r );
+
+		// PCF 2x2
+		if( u_ShadowMode > 1 )
+		{
+			vec3 coord2 = coord + vec3( 0.0, dtH, 0.0 );
+			float shadow1 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+			coord2 = coord + vec3( dtW, dtH, 0.0 );
+			float shadow2 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+			coord2 = coord + vec3( dtW, 0.0, 0.0 );
+			float shadow3 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+			// PCF 3x3
+			if( u_ShadowMode > 2 )
+			{
+				coord2 = coord + vec3( -dtW, 0.0, 0.0 );
+				float shadow4 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+				coord2 = coord + vec3( -dtW, -dtH, 0.0 );
+				float shadow5 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+				coord2 = coord + vec3( 0.0, -dtH, 0.0 );
+				float shadow6 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+				coord2 = coord + vec3( dtW, -dtH, 0.0 );
+				float shadow7 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+				coord2 = coord + vec3( -dtW, dtH, 0.0 );
+				float shadow8 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+				return (shadow0 + shadow1 + shadow2 + shadow3 + shadow4 + shadow5 + shadow6 + shadow7 + shadow8) * 0.11;
+			}
+			else
+			{
+				return (shadow0 + shadow1 + shadow2 + shadow3) * 0.25;
+			}
+		}
+		else
+		{
+			return shadow0;
+		}
+	}
+}
+
+void main( void )
+{
+	// compute the diffuse term
+	vec4 diffuse = texture2D( u_ColorMap, var_TexCoord );
+
+	if( bool( u_FaceFlags & STUDIO_NF_TRANSPARENT ) && diffuse.a <= 0.5 )
+	{
+		discard;
+		return;
+	}
+
+	vec3 light;
+
+	// compute the light term
+	if( bool( u_FaceFlags & STUDIO_NF_FULLBRIGHT ))
+	{
+		light = vec3( 1.0, 1.0, 1.0 );
+	}
+	else if( bool( u_PointLight ))
+	{
+		light = u_LightDiffuse;
+
+		// attenuation XY (original code using GL_ONE_MINUS_SRC_ALPHA)
+		light *= ( 1.0 - texture2D( u_AttnXYMap, var_ProjCoord[0].st ).a );
+
+		// attenuation Z (original code using GL_ONE_MINUS_SRC_ALPHA)
+		light *= ( 1.0 - texture1D( u_AttnZMap, var_ProjCoord[1].s ).a );
+
+		light *= var_LightCos;
+	}
+	else
+	{
+		light = texture2DProj( u_ProjectMap, var_ProjCoord[0] ).rgb * u_LightDiffuse;
+
+		// linear attenuation texture
+		light *= texture1D( u_AttnZMap, var_ProjCoord[1].s ).r;
+
+		// remap the dot value for more soft lighting
+		light *= RemapVal( var_LightCos, -0.9, 1.0, 0.0, 1.0 );
+	}
+
+	light *= ComputeShadow();
+
+	if( bool( u_FaceFlags & STUDIO_NF_ADDITIVE ))
+	{
+		diffuse.a = 0.5;
+	}
+
+	diffuse.rgb *= light.rgb;
+
+	diffuse.rgb *= 2.0;	// GL_RGB_SCALE_ARB 2
+
+	// compute final color
+	gl_FragColor = diffuse;
+}

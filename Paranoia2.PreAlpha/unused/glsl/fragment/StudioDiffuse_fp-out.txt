@@ -1,0 +1,25 @@
+#version 130
+uniform sampler2D u_ColorMap;
+uniform int u_FaceFlags;
+in vec3 var_Color;
+in vec2 var_TexCoord;
+void main ()
+{
+  vec4 diffuse_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture (u_ColorMap, var_TexCoord);
+  diffuse_1 = tmpvar_2;
+  if ((bool((u_FaceFlags & 64)) && (tmpvar_2.w <= 0.5))) {
+    discard;
+    return;
+  };
+  diffuse_1.xyz = (tmpvar_2.xyz * var_Color);
+  if (bool((u_FaceFlags & 32))) {
+    diffuse_1.w = 0.5;
+  };
+  diffuse_1.xyz = (diffuse_1.xyz * 2.0);
+  gl_FragColor = diffuse_1;
+}
+
+
+// inputs: 2, stats: 9 alu 2 tex 3 flow

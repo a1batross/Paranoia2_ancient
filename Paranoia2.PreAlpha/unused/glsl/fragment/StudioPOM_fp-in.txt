@@ -1,0 +1,189 @@
+/*
+StudioPOM_fp.glsl - studio model with parallax occlusion mapping fragment program
+Copyright (C) 2014 Uncle Mike
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+*/
+
+#version 130
+
+#define STUDIO_NF_FLATSHADE		1
+#define STUDIO_NF_CHROME		2
+#define STUDIO_NF_FULLBRIGHT		4
+#define STUDIO_NF_COLORMAP		8	// can changed by colormap command
+#define STUDIO_NF_BLENDED		16	// rendering as semiblended
+#define STUDIO_NF_ADDITIVE		32	// rendering with additive mode
+#define STUDIO_NF_TRANSPARENT		64	// use texture with alpha channel
+
+uniform sampler2D		u_ColorMap;
+uniform sampler2D		u_NormalMap;
+uniform sampler2D		u_GlossMap;
+uniform sampler2D		u_DepthMap;
+
+uniform vec3		u_LightDiffuse;
+uniform vec3		u_LightAmbient;
+uniform vec3		u_ViewOrigin;
+uniform int		u_FaceFlags;
+uniform vec2		u_ParallaxScale;
+uniform int		u_ParallaxSteps;
+uniform int		u_ParallaxMode;
+uniform float		u_GlossExponent;
+	
+varying vec2		var_TexCoord;
+varying mat3		var_OS2TSMatrix;
+varying vec3		var_ViewDir;
+varying vec3		var_LightDir;
+
+float CalcHeight( const in vec2 texCoord )
+{
+	return ( texture2D( u_DepthMap, texCoord ).r );
+}
+
+vec2 CalcParallaxOffset( const in vec2 texCoord, const in vec3 viewVec )
+{
+	if( u_ParallaxMode > 1 )
+	{
+		// Parallax Occlusion Maping
+		// high quality, uses Crysis™ shader.
+
+		float step = 1.0 / float( u_ParallaxSteps );
+		vec2 delta = 2.0 * u_ParallaxScale * viewVec.xy / ( -viewVec.z * float( u_ParallaxSteps ));
+		float NB0 = CalcHeight( texCoord );
+		float height = 1.0 - step;
+		vec2 offset = texCoord + delta;
+		float NB1 = CalcHeight( offset );
+
+		for( int i = 0; i < 10; i++ )
+		{
+			if( NB1 >= height )
+				break;
+
+			NB0 = NB1;
+			height -= step;
+			offset += delta;
+			NB1 = CalcHeight( offset );
+		}
+
+		vec2 offsetBest = offset;
+		float error = 1.0;
+		float t1 = height;
+		float t0 = t1 + step;
+		float delta1 = t1 - NB1;
+		float delta0 = t0 - NB0;
+
+		vec4 intersect = vec4( delta * float( u_ParallaxSteps ), delta * float( u_ParallaxSteps ) + texCoord );
+
+		for( int i = 0; i < 10; i++ )
+		{
+			if( abs( error ) <= 0.01 )
+				break;
+
+			float denom = delta1 - delta0;
+			float t = ( t0 * delta1 - t1 * delta0 ) / denom;
+			offsetBest = -t * intersect.xy + intersect.zw;
+
+			float NB = CalcHeight( offsetBest );
+
+			error = t - NB;
+			if( error < 0.0 )
+			{
+				delta1 = error;
+				t1 = t;
+			}
+			else
+			{
+				delta0 = error;
+				t0 = t;
+			}
+		}
+
+		return offsetBest;
+	}
+	else
+	{
+		// simple fastest parallax mapping
+		float offset = texture2D( u_DepthMap, texCoord ).r * 0.04 - 0.02;
+		return ( offset * viewVec.xy + texCoord );
+	}
+}
+
+void main( void )
+{
+	vec3 specular = vec3( 0.0, 0.0, 0.0 );
+
+	vec2 texcoord = var_TexCoord;
+
+	vec3 illum;
+
+	if( bool( u_FaceFlags & STUDIO_NF_FULLBRIGHT ))
+	{
+		// just get fullbright
+		illum = vec3( 1.0, 1.0, 1.0 );
+	}
+	else if( bool( u_FaceFlags & STUDIO_NF_FLATSHADE ))
+	{
+		// ambient lighting
+		illum = u_LightAmbient + u_LightDiffuse * 0.8;
+	}
+	else
+	{
+		// bump mapping with parallax mapping
+
+		// compute view direction in tangent space
+		vec3 V = normalize( var_ViewDir );
+
+		// compute light direction in tangent space
+		vec3 L = normalize( var_LightDir );
+
+		texcoord = CalcParallaxOffset( var_TexCoord, V );
+
+		// compute normal in tangent space from normalmap
+		vec3 N = normalize( 2.0 * ( texture2D( u_NormalMap, texcoord ).xyz - 0.5 ));
+
+		// compute the specular term
+		specular = texture2D( u_GlossMap, texcoord ).rgb * u_LightDiffuse;
+		specular *= pow( max( dot( reflect( -L, N ), V ), 0.0 ), u_GlossExponent );
+
+		// compute the light term
+		illum = u_LightAmbient + u_LightDiffuse * max( dot( N, L ), 0.0 );
+	}
+
+	// compute the diffuse term
+	vec4 diffuse = texture2D( u_ColorMap, texcoord );
+
+	// catch negative lighting
+	illum.x = max( 0.0, illum.x );
+	illum.y = max( 0.0, illum.y );
+	illum.z = max( 0.0, illum.z );
+
+	// normalize light	
+	float maxIllum = max( illum.x, max( illum.y, illum.z ));
+	if( maxIllum > 1.0 ) illum *= ( 1.0 / maxIllum );
+
+	diffuse.rgb *= illum;
+	diffuse.rgb += specular;
+
+	if( bool( u_FaceFlags & STUDIO_NF_TRANSPARENT ) && diffuse.a <= 0.5 )
+	{
+		discard;
+		return;
+	}
+
+	if( bool( u_FaceFlags & STUDIO_NF_ADDITIVE ))
+	{
+		diffuse.a = 0.5;
+	}
+
+//	diffuse.rgb *= 2.0;	// GL_RGB_SCALE_ARB 2
+
+	// compute final color
+	gl_FragData[0] = diffuse;
+}

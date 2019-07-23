@@ -1,0 +1,823 @@
+float tmpvar_1;
+bool tmpvar_2;
+float tmpvar_3;
+bool tmpvar_4;
+float tmpvar_5;
+bool tmpvar_6;
+float tmpvar_7;
+float tmpvar_8;
+float tmpvar_9;
+float tmpvar_10;
+float tmpvar_11;
+vec2 tmpvar_12;
+bool tmpvar_13;
+float tmpvar_14;
+float tmpvar_15;
+float tmpvar_16;
+bool tmpvar_17;
+float tmpvar_18;
+float tmpvar_19;
+float tmpvar_20;
+float tmpvar_21;
+float tmpvar_22;
+bool tmpvar_23;
+int tmpvar_24;
+int tmpvar_25;
+float tmpvar_26;
+float tmpvar_27;
+vec2 tmpvar_28;
+vec2 tmpvar_29;
+float tmpvar_30;
+float tmpvar_31;
+uniform float u_ScreenWidth;
+uniform float u_ScreenHeight;
+uniform int u_GenericCondition;
+uniform float u_FocalDepth;
+uniform float u_FocalLength;
+uniform float u_FStop;
+uniform float u_zFar;
+uniform sampler2D u_ColorMap;
+uniform sampler2D u_DepthMap;
+float width;
+float height;
+vec2 texel;
+float znear;
+float zfar;
+int samples;
+int rings;
+bool manualdof;
+float ndofstart;
+float ndofdist;
+float fdofstart;
+float fdofdist;
+float CoC;
+bool vignetting;
+float vignout;
+float vignin;
+float vignfade;
+bool autofocus;
+vec2 focus;
+float maxblur;
+float threshold;
+float gain;
+float bias;
+float fringe;
+bool noise;
+float namount;
+bool depthblur;
+float dbsize;
+bool pentagon;
+float feather;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+//;
+float penta (
+  in vec2 coords_32
+)
+{
+  float inorout_33;
+  vec4 dist_34;
+  vec4 P_35;
+  float scale_36;
+  vec4 one_37;
+  vec4 HS5_38;
+  vec4 HS4_39;
+  vec4 HS3_40;
+  vec4 HS2_41;
+  vec4 HS1_42;
+  vec4 HS0_43;
+  vec4 tmpvar_44;
+  tmpvar_44 = vec4(1.0, 0.0, 0.0, 1.0);
+  HS0_43 = tmpvar_44;
+  vec4 tmpvar_45;
+  tmpvar_45 = vec4(0.309017, 0.951057, 0.0, 1.0);
+  HS1_42 = tmpvar_45;
+  vec4 tmpvar_46;
+  tmpvar_46 = vec4(-0.809017, 0.587785, 0.0, 1.0);
+  HS2_41 = tmpvar_46;
+  vec4 tmpvar_47;
+  tmpvar_47 = vec4(-0.809017, -0.587785, 0.0, 1.0);
+  HS3_40 = tmpvar_47;
+  vec4 tmpvar_48;
+  tmpvar_48 = vec4(0.309017, -0.951057, 0.0, 1.0);
+  HS4_39 = tmpvar_48;
+  vec4 tmpvar_49;
+  tmpvar_49 = vec4(0.0, 0.0, 1.0, 1.0);
+  HS5_38 = tmpvar_49;
+  vec4 tmpvar_50;
+  tmpvar_50 = vec4(1.0, 1.0, 1.0, 1.0);
+  one_37 = tmpvar_50;
+  float tmpvar_51;
+  tmpvar_51 = (float(rings) - 1.3);
+  scale_36 = tmpvar_51;
+  vec2 tmpvar_52;
+  tmpvar_52.x = scale_36;
+  tmpvar_52.y = scale_36;
+  vec4 tmpvar_53;
+  tmpvar_53.xy = coords_32.xy;
+  tmpvar_53.zw = tmpvar_52.xy;
+  vec4 tmpvar_54;
+  tmpvar_54 = tmpvar_53;
+  P_35 = tmpvar_54;
+  vec4 tmpvar_55;
+  tmpvar_55 = vec4(0.0, 0.0, 0.0, 0.0);
+  dist_34 = tmpvar_55;
+  float tmpvar_56;
+  tmpvar_56 = -(4.0);
+  inorout_33 = tmpvar_56;
+  float tmpvar_57;
+  tmpvar_57 = dot (P_35, HS0_43);
+  float tmpvar_58;
+  tmpvar_58 = tmpvar_57;
+  dist_34.x = tmpvar_58;
+  float tmpvar_59;
+  tmpvar_59 = dot (P_35, HS1_42);
+  float tmpvar_60;
+  tmpvar_60 = tmpvar_59;
+  dist_34.y = vec2(tmpvar_60).y;
+  float tmpvar_61;
+  tmpvar_61 = dot (P_35, HS2_41);
+  float tmpvar_62;
+  tmpvar_62 = tmpvar_61;
+  dist_34.z = vec3(tmpvar_62).z;
+  float tmpvar_63;
+  tmpvar_63 = dot (P_35, HS3_40);
+  float tmpvar_64;
+  tmpvar_64 = tmpvar_63;
+  dist_34.w = vec4(tmpvar_64).w;
+  vec4 tmpvar_65;
+  tmpvar_65 = smoothstep (-(feather), feather, dist_34);
+  vec4 tmpvar_66;
+  tmpvar_66 = tmpvar_65;
+  dist_34 = tmpvar_66;
+  float tmpvar_67;
+  tmpvar_67 = dot (dist_34, one_37);
+  float tmpvar_68;
+  tmpvar_68 = (inorout_33 + tmpvar_67);
+  inorout_33 = tmpvar_68;
+  float tmpvar_69;
+  tmpvar_69 = dot (P_35, HS4_39);
+  float tmpvar_70;
+  tmpvar_70 = tmpvar_69;
+  dist_34.x = tmpvar_70;
+  float tmpvar_71;
+  tmpvar_71 = abs (P_35.z);
+  float tmpvar_72;
+  tmpvar_72 = (HS5_38.w - tmpvar_71);
+  dist_34.y = vec2(tmpvar_72).y;
+  vec4 tmpvar_73;
+  tmpvar_73 = smoothstep (-(feather), feather, dist_34);
+  vec4 tmpvar_74;
+  tmpvar_74 = tmpvar_73;
+  dist_34 = tmpvar_74;
+  float tmpvar_75;
+  tmpvar_75 = (inorout_33 + dist_34.x);
+  inorout_33 = tmpvar_75;
+  float tmpvar_76;
+  tmpvar_76 = clamp (inorout_33, 0.0, 1.0);
+  return tmpvar_76;
+}
+
+float bdepth (
+  in vec2 coords_77
+)
+{
+  int i_78;
+  vec2 wh_79;
+  vec2 offset_80[9];
+  float kernel_81[9];
+  float d_82;
+  float tmpvar_83;
+  tmpvar_83 = 0.0;
+  d_82 = tmpvar_83;
+  vec2 tmpvar_84;
+  tmpvar_84.x = texel.x;
+  tmpvar_84.y = texel.y;
+  vec2 tmpvar_85;
+  tmpvar_85 = (tmpvar_84 * dbsize);
+  wh_79 = tmpvar_85;
+  vec2 tmpvar_86;
+  tmpvar_86.x = -(wh_79.x);
+  tmpvar_86.y = -(wh_79.y);
+  vec2 tmpvar_87;
+  tmpvar_87 = tmpvar_86;
+  offset_80[0] = tmpvar_87;
+  vec2 tmpvar_88;
+  tmpvar_88.x = 0.0;
+  tmpvar_88.y = -(wh_79.y);
+  vec2 tmpvar_89;
+  tmpvar_89 = tmpvar_88;
+  offset_80[1] = tmpvar_89;
+  vec2 tmpvar_90;
+  tmpvar_90 = vec2((wh_79.x - wh_79.y));
+  vec2 tmpvar_91;
+  tmpvar_91 = tmpvar_90;
+  offset_80[2] = tmpvar_91;
+  vec2 tmpvar_92;
+  tmpvar_92.y = 0.0;
+  tmpvar_92.x = -(wh_79.x);
+  vec2 tmpvar_93;
+  tmpvar_93 = tmpvar_92;
+  offset_80[3] = tmpvar_93;
+  vec2 tmpvar_94;
+  tmpvar_94 = vec2(0.0, 0.0);
+  offset_80[4] = tmpvar_94;
+  vec2 tmpvar_95;
+  tmpvar_95.y = 0.0;
+  tmpvar_95.x = wh_79.x;
+  vec2 tmpvar_96;
+  tmpvar_96 = tmpvar_95;
+  offset_80[5] = tmpvar_96;
+  vec2 tmpvar_97;
+  tmpvar_97.x = -(wh_79.x);
+  tmpvar_97.y = wh_79.y;
+  vec2 tmpvar_98;
+  tmpvar_98 = tmpvar_97;
+  offset_80[6] = tmpvar_98;
+  vec2 tmpvar_99;
+  tmpvar_99.x = 0.0;
+  tmpvar_99.y = wh_79.y;
+  vec2 tmpvar_100;
+  tmpvar_100 = tmpvar_99;
+  offset_80[7] = tmpvar_100;
+  vec2 tmpvar_101;
+  tmpvar_101.x = wh_79.x;
+  tmpvar_101.y = wh_79.y;
+  vec2 tmpvar_102;
+  tmpvar_102 = tmpvar_101;
+  offset_80[8] = tmpvar_102;
+  float tmpvar_103;
+  tmpvar_103 = (1.0 / 16.0);
+  kernel_81[0] = tmpvar_103;
+  float tmpvar_104;
+  tmpvar_104 = (2.0 / 16.0);
+  kernel_81[1] = tmpvar_104;
+  float tmpvar_105;
+  tmpvar_105 = (1.0 / 16.0);
+  kernel_81[2] = tmpvar_105;
+  float tmpvar_106;
+  tmpvar_106 = (2.0 / 16.0);
+  kernel_81[3] = tmpvar_106;
+  float tmpvar_107;
+  tmpvar_107 = (4.0 / 16.0);
+  kernel_81[4] = tmpvar_107;
+  float tmpvar_108;
+  tmpvar_108 = (2.0 / 16.0);
+  kernel_81[5] = tmpvar_108;
+  float tmpvar_109;
+  tmpvar_109 = (1.0 / 16.0);
+  kernel_81[6] = tmpvar_109;
+  float tmpvar_110;
+  tmpvar_110 = (2.0 / 16.0);
+  kernel_81[7] = tmpvar_110;
+  float tmpvar_111;
+  tmpvar_111 = (1.0 / 16.0);
+  kernel_81[8] = tmpvar_111;
+  int tmpvar_112;
+  tmpvar_112 = 0;
+  i_78 = tmpvar_112;
+  while (true) {
+    float tmp_113;
+    if (!((i_78 < 9))) {
+      break;
+    };
+    vec4 tmpvar_114;
+    tmpvar_114 = texture2D (u_DepthMap, (coords_77 + offset_80[i_78]));
+    float tmpvar_115;
+    tmpvar_115 = tmpvar_114.x;
+    tmp_113 = tmpvar_115;
+    float tmpvar_116;
+    tmpvar_116 = (d_82 + (tmp_113 * kernel_81[i_78]));
+    d_82 = tmpvar_116;
+    int _post_incdec_tmp_117;
+    _post_incdec_tmp_117 = i_78;
+    int tmpvar_118;
+    tmpvar_118 = (i_78 + 1);
+    i_78 = tmpvar_118;
+  };
+  return d_82;
+}
+
+vec3 color (
+  in vec2 coords_119,
+  in float blur_120
+)
+{
+  float thresh_121;
+  float lum_122;
+  vec3 lumcoeff_123;
+  vec3 col_124;
+  vec3 tmpvar_125;
+  tmpvar_125 = vec3(0.0, 0.0, 0.0);
+  col_124 = tmpvar_125;
+  vec4 tmpvar_126;
+  tmpvar_126 = texture2D (u_ColorMap, (coords_119 + ((
+    (vec2(0.0, 1.0) * texel)
+   * fringe) * blur_120)));
+  float tmpvar_127;
+  tmpvar_127 = tmpvar_126.x;
+  col_124.x = tmpvar_127;
+  vec4 tmpvar_128;
+  tmpvar_128 = texture2D (u_ColorMap, (coords_119 + ((
+    (vec2(-0.866, -0.5) * texel)
+   * fringe) * blur_120)));
+  float tmpvar_129;
+  tmpvar_129 = tmpvar_128.y;
+  col_124.y = vec2(tmpvar_129).y;
+  vec4 tmpvar_130;
+  tmpvar_130 = texture2D (u_ColorMap, (coords_119 + ((
+    (vec2(0.866, -0.5) * texel)
+   * fringe) * blur_120)));
+  float tmpvar_131;
+  tmpvar_131 = tmpvar_130.z;
+  col_124.z = vec3(tmpvar_131).z;
+  vec3 tmpvar_132;
+  tmpvar_132 = vec3(0.299, 0.587, 0.114);
+  lumcoeff_123 = tmpvar_132;
+  float tmpvar_133;
+  tmpvar_133 = dot (col_124.xyz, lumcoeff_123);
+  float tmpvar_134;
+  tmpvar_134 = tmpvar_133;
+  lum_122 = tmpvar_134;
+  float tmpvar_135;
+  tmpvar_135 = max (((lum_122 - threshold) * gain), 0.0);
+  float tmpvar_136;
+  tmpvar_136 = tmpvar_135;
+  thresh_121 = tmpvar_136;
+  vec3 tmpvar_137;
+  tmpvar_137 = mix (vec3(0.0, 0.0, 0.0), col_124, (thresh_121 * blur_120));
+  return (col_124 + tmpvar_137);
+}
+
+vec2 rand (
+  in vec2 coord_138
+)
+{
+  float noiseY_139;
+  float noiseX_140;
+  float tmpvar_141;
+  tmpvar_141 = fract ((1.0 - (coord_138.x * (width / 2.0))));
+  float tmpvar_142;
+  tmpvar_142 = fract ((coord_138.y * (height / 2.0)));
+  float tmpvar_143;
+  tmpvar_143 = (((
+    (tmpvar_141 * 0.25)
+   + 
+    (tmpvar_142 * 0.75)
+  ) * 2.0) - 1.0);
+  noiseX_140 = tmpvar_143;
+  float tmpvar_144;
+  tmpvar_144 = fract ((1.0 - (coord_138.x * (width / 2.0))));
+  float tmpvar_145;
+  tmpvar_145 = fract ((coord_138.y * (height / 2.0)));
+  float tmpvar_146;
+  tmpvar_146 = (((
+    (tmpvar_144 * 0.75)
+   + 
+    (tmpvar_145 * 0.25)
+  ) * 2.0) - 1.0);
+  noiseY_139 = tmpvar_146;
+  if (noise) {
+    float tmpvar_147;
+    tmpvar_147 = dot (coord_138, vec2(12.9898, 78.233));
+    float tmpvar_148;
+    tmpvar_148 = sin (tmpvar_147);
+    float tmpvar_149;
+    tmpvar_149 = fract ((tmpvar_148 * 43758.5));
+    float tmpvar_150;
+    tmpvar_150 = clamp (tmpvar_149, 0.0, 1.0);
+    float tmpvar_151;
+    tmpvar_151 = ((tmpvar_150 * 2.0) - 1.0);
+    noiseX_140 = tmpvar_151;
+    float tmpvar_152;
+    tmpvar_152 = dot (coord_138, vec2(25.9796, 156.466));
+    float tmpvar_153;
+    tmpvar_153 = sin (tmpvar_152);
+    float tmpvar_154;
+    tmpvar_154 = fract ((tmpvar_153 * 43758.5));
+    float tmpvar_155;
+    tmpvar_155 = clamp (tmpvar_154, 0.0, 1.0);
+    float tmpvar_156;
+    tmpvar_156 = ((tmpvar_155 * 2.0) - 1.0);
+    noiseY_139 = tmpvar_156;
+  };
+  vec2 tmpvar_157;
+  tmpvar_157.x = noiseX_140;
+  tmpvar_157.y = noiseY_139;
+  return tmpvar_157;
+}
+
+vec3 debugFocus (
+  in vec3 col_158,
+  in float blur_159,
+  in float depth_160
+)
+{
+  float e_161;
+  float m_162;
+  float edge_163;
+  float tmpvar_164;
+  tmpvar_164 = (0.002 * depth_160);
+  edge_163 = tmpvar_164;
+  float tmpvar_165;
+  tmpvar_165 = smoothstep (0.0, edge_163, blur_159);
+  float tmpvar_166;
+  tmpvar_166 = clamp (tmpvar_165, 0.0, 1.0);
+  float tmpvar_167;
+  tmpvar_167 = tmpvar_166;
+  m_162 = tmpvar_167;
+  float tmpvar_168;
+  tmpvar_168 = smoothstep ((1.0 - edge_163), 1.0, blur_159);
+  float tmpvar_169;
+  tmpvar_169 = clamp (tmpvar_168, 0.0, 1.0);
+  float tmpvar_170;
+  tmpvar_170 = tmpvar_169;
+  e_161 = tmpvar_170;
+  vec3 tmpvar_171;
+  tmpvar_171 = mix (col_158, vec3(1.0, 0.5, 0.0), ((1.0 - m_162) * 0.6));
+  vec3 tmpvar_172;
+  tmpvar_172 = tmpvar_171;
+  col_158 = tmpvar_172;
+  vec3 tmpvar_173;
+  tmpvar_173 = mix (col_158, vec3(0.0, 0.5, 1.0), (((1.0 - e_161) - (1.0 - m_162)) * 0.2));
+  vec3 tmpvar_174;
+  tmpvar_174 = tmpvar_173;
+  col_158 = tmpvar_174;
+  return col_158;
+}
+
+float linearize (
+  in float depth_175
+)
+{
+  return ((-(zfar) * znear) / ((depth_175 * 
+    (zfar - znear)
+  ) - zfar));
+}
+
+float vignette ()
+{
+  float dist_176;
+  float tmpvar_177;
+  tmpvar_177 = distance (gl_TexCoord[3].xy, vec2(0.5, 0.5));
+  float tmpvar_178;
+  tmpvar_178 = tmpvar_177;
+  dist_176 = tmpvar_178;
+  float tmpvar_179;
+  tmpvar_179 = smoothstep ((vignout + (u_FStop / vignfade)), (vignin + (u_FStop / vignfade)), dist_176);
+  float tmpvar_180;
+  tmpvar_180 = tmpvar_179;
+  dist_176 = tmpvar_180;
+  float tmpvar_181;
+  tmpvar_181 = clamp (dist_176, 0.0, 1.0);
+  return tmpvar_181;
+}
+
+void main ()
+{
+tmpvar_31 = u_ScreenWidth;
+width = tmpvar_31;
+tmpvar_30 = u_ScreenHeight;
+height = tmpvar_30;
+tmpvar_29.x = (1.0 / width);
+tmpvar_29.y = (1.0 / height);
+tmpvar_28 = tmpvar_29;
+texel = tmpvar_28;
+tmpvar_27 = 4.0;
+znear = tmpvar_27;
+tmpvar_26 = u_zFar;
+zfar = tmpvar_26;
+tmpvar_25 = 3;
+samples = tmpvar_25;
+tmpvar_24 = 3;
+rings = tmpvar_24;
+tmpvar_23 = bool(0);
+manualdof = tmpvar_23;
+tmpvar_22 = 1.0;
+ndofstart = tmpvar_22;
+tmpvar_21 = 2.0;
+ndofdist = tmpvar_21;
+tmpvar_20 = 1.0;
+fdofstart = tmpvar_20;
+tmpvar_19 = 3.0;
+fdofdist = tmpvar_19;
+tmpvar_18 = 0.03;
+CoC = tmpvar_18;
+tmpvar_17 = bool(0);
+vignetting = tmpvar_17;
+tmpvar_16 = 1.3;
+vignout = tmpvar_16;
+tmpvar_15 = 0.0;
+vignin = tmpvar_15;
+tmpvar_14 = 22.0;
+vignfade = tmpvar_14;
+tmpvar_13 = bool(0);
+autofocus = tmpvar_13;
+tmpvar_12 = vec2(0.5, 0.5);
+focus = tmpvar_12;
+tmpvar_11 = 1.0;
+maxblur = tmpvar_11;
+tmpvar_10 = 0.0;
+threshold = tmpvar_10;
+tmpvar_9 = 0.0;
+gain = tmpvar_9;
+tmpvar_8 = 0.5;
+bias = tmpvar_8;
+tmpvar_7 = 0.7;
+fringe = tmpvar_7;
+tmpvar_6 = bool(1);
+noise = tmpvar_6;
+tmpvar_5 = 0.0001;
+namount = tmpvar_5;
+tmpvar_4 = bool(0);
+depthblur = tmpvar_4;
+tmpvar_3 = 1.25;
+dbsize = tmpvar_3;
+tmpvar_2 = bool(0);
+pentagon = tmpvar_2;
+tmpvar_1 = 0.4;
+feather = tmpvar_1;
+  vec3 col_182;
+  float h_183;
+  float w_184;
+  vec2 noise_185;
+  float blur_186;
+  float fDepth_187;
+  float depth_188;
+  vec4 tmpvar_189;
+  tmpvar_189 = texture2D (u_DepthMap, gl_TexCoord[0].xy);
+  float tmpvar_190;
+  tmpvar_190 = linearize (tmpvar_189.x);
+  float tmpvar_191;
+  tmpvar_191 = tmpvar_190;
+  depth_188 = tmpvar_191;
+  if (depthblur) {
+    float tmpvar_192;
+    tmpvar_192 = bdepth (gl_TexCoord[0].xy);
+    float tmpvar_193;
+    tmpvar_193 = linearize (tmpvar_192);
+    float tmpvar_194;
+    tmpvar_194 = tmpvar_193;
+    depth_188 = tmpvar_194;
+  };
+  float tmpvar_195;
+  tmpvar_195 = u_FocalDepth;
+  fDepth_187 = tmpvar_195;
+  if (autofocus) {
+    vec4 tmpvar_196;
+    tmpvar_196 = texture2D (u_DepthMap, focus);
+    float tmpvar_197;
+    tmpvar_197 = linearize (tmpvar_196.x);
+    float tmpvar_198;
+    tmpvar_198 = tmpvar_197;
+    fDepth_187 = tmpvar_198;
+  };
+  float tmpvar_199;
+  tmpvar_199 = 0.0;
+  blur_186 = tmpvar_199;
+  if (manualdof) {
+    float c_200;
+    float b_201;
+    float a_202;
+    float tmpvar_203;
+    tmpvar_203 = (depth_188 - fDepth_187);
+    a_202 = tmpvar_203;
+    float tmpvar_204;
+    tmpvar_204 = ((a_202 - fdofstart) / fdofdist);
+    b_201 = tmpvar_204;
+    float tmpvar_205;
+    tmpvar_205 = ((-(a_202) - ndofstart) / ndofdist);
+    c_200 = tmpvar_205;
+    float tmpvar_206;
+    if ((a_202 > 0.0)) {
+      tmpvar_206 = b_201;
+    } else {
+      tmpvar_206 = c_200;
+    };
+    float tmpvar_207;
+    tmpvar_207 = tmpvar_206;
+    blur_186 = tmpvar_207;
+  } else {
+    float c_208;
+    float b_209;
+    float a_210;
+    float o_211;
+    float d_212;
+    float f_213;
+    float tmpvar_214;
+    tmpvar_214 = u_FocalLength;
+    f_213 = tmpvar_214;
+    float tmpvar_215;
+    tmpvar_215 = (fDepth_187 * 1000.0);
+    d_212 = tmpvar_215;
+    float tmpvar_216;
+    tmpvar_216 = (depth_188 * 1000.0);
+    o_211 = tmpvar_216;
+    float tmpvar_217;
+    tmpvar_217 = ((o_211 * f_213) / (o_211 - f_213));
+    a_210 = tmpvar_217;
+    float tmpvar_218;
+    tmpvar_218 = ((d_212 * f_213) / (d_212 - f_213));
+    b_209 = tmpvar_218;
+    float tmpvar_219;
+    tmpvar_219 = ((d_212 - f_213) / ((d_212 * u_FStop) * CoC));
+    c_208 = tmpvar_219;
+    float tmpvar_220;
+    tmpvar_220 = abs ((a_210 - b_209));
+    float tmpvar_221;
+    tmpvar_221 = (tmpvar_220 * c_208);
+    blur_186 = tmpvar_221;
+  };
+  float tmpvar_222;
+  tmpvar_222 = clamp (blur_186, 0.0, 1.0);
+  float tmpvar_223;
+  tmpvar_223 = tmpvar_222;
+  blur_186 = tmpvar_223;
+  vec2 tmpvar_224;
+  tmpvar_224 = rand (gl_TexCoord[0].xy);
+  vec2 tmpvar_225;
+  tmpvar_225 = ((tmpvar_224 * namount) * blur_186);
+  noise_185 = tmpvar_225;
+  float tmpvar_226;
+  tmpvar_226 = (((texel.x * blur_186) * maxblur) + noise_185.x);
+  w_184 = tmpvar_226;
+  float tmpvar_227;
+  tmpvar_227 = (((texel.y * blur_186) * maxblur) + noise_185.y);
+  h_183 = tmpvar_227;
+  vec3 tmpvar_228;
+  tmpvar_228 = vec3(0.0, 0.0, 0.0);
+  col_182 = tmpvar_228;
+  if ((blur_186 < 0.05)) {
+    vec4 tmpvar_229;
+    tmpvar_229 = texture2D (u_ColorMap, gl_TexCoord[0].xy);
+    vec3 tmpvar_230;
+    tmpvar_230 = tmpvar_229.xyz;
+    col_182 = tmpvar_230;
+  } else {
+    int i_231;
+    float s_232;
+    int ringsamples_233;
+    vec4 tmpvar_234;
+    tmpvar_234 = texture2D (u_ColorMap, gl_TexCoord[0].xy);
+    vec3 tmpvar_235;
+    tmpvar_235 = tmpvar_234.xyz;
+    col_182 = tmpvar_235;
+    float tmpvar_236;
+    tmpvar_236 = 1.0;
+    s_232 = tmpvar_236;
+    int tmpvar_237;
+    tmpvar_237 = 1;
+    i_231 = tmpvar_237;
+    while (true) {
+      int j_238;
+      if (!((i_231 <= rings))) {
+        break;
+      };
+      int tmpvar_239;
+      tmpvar_239 = (i_231 * samples);
+      ringsamples_233 = tmpvar_239;
+      int tmpvar_240;
+      tmpvar_240 = 0;
+      j_238 = tmpvar_240;
+      while (true) {
+        float p_241;
+        float ph_242;
+        float pw_243;
+        float step_244;
+        if (!((j_238 < ringsamples_233))) {
+          break;
+        };
+        float tmpvar_245;
+        tmpvar_245 = ((3.14159 * 2.0) / float(ringsamples_233));
+        step_244 = tmpvar_245;
+        float tmpvar_246;
+        tmpvar_246 = cos ((float(j_238) * step_244));
+        float tmpvar_247;
+        tmpvar_247 = (tmpvar_246 * float(i_231));
+        pw_243 = tmpvar_247;
+        float tmpvar_248;
+        tmpvar_248 = sin ((float(j_238) * step_244));
+        float tmpvar_249;
+        tmpvar_249 = (tmpvar_248 * float(i_231));
+        ph_242 = tmpvar_249;
+        float tmpvar_250;
+        tmpvar_250 = 1.0;
+        p_241 = tmpvar_250;
+        if (pentagon) {
+          vec2 tmpvar_251;
+          tmpvar_251.x = pw_243;
+          tmpvar_251.y = ph_242;
+          float tmpvar_252;
+          tmpvar_252 = penta (tmpvar_251);
+          float tmpvar_253;
+          tmpvar_253 = tmpvar_252;
+          p_241 = tmpvar_253;
+        };
+        vec2 tmpvar_254;
+        tmpvar_254.x = (pw_243 * w_184);
+        tmpvar_254.y = (ph_242 * h_183);
+        vec3 tmpvar_255;
+        tmpvar_255 = color ((gl_TexCoord[0].xy + tmpvar_254), blur_186);
+        float tmpvar_256;
+        tmpvar_256 = mix (1.0, (float(i_231) / float(rings)), bias);
+        vec3 tmpvar_257;
+        tmpvar_257 = (col_182 + ((tmpvar_255 * tmpvar_256) * p_241));
+        col_182 = tmpvar_257;
+        float tmpvar_258;
+        tmpvar_258 = mix (1.0, (float(i_231) / float(rings)), bias);
+        float tmpvar_259;
+        tmpvar_259 = (s_232 + ((1.0 * tmpvar_258) * p_241));
+        s_232 = tmpvar_259;
+        int tmpvar_260;
+        tmpvar_260 = (j_238 + 1);
+        j_238 = tmpvar_260;
+      };
+      int tmpvar_261;
+      tmpvar_261 = (i_231 + 1);
+      i_231 = tmpvar_261;
+    };
+    vec3 tmpvar_262;
+    tmpvar_262 = (col_182 / s_232);
+    col_182 = tmpvar_262;
+  };
+  if (bool(u_GenericCondition)) {
+    vec3 tmpvar_263;
+    tmpvar_263 = debugFocus (col_182, blur_186, depth_188);
+    vec3 tmpvar_264;
+    tmpvar_264 = tmpvar_263;
+    col_182 = tmpvar_264;
+  };
+  if (vignetting) {
+    float tmpvar_265;
+    tmpvar_265 = vignette ();
+    vec3 tmpvar_266;
+    tmpvar_266 = (col_182 * tmpvar_265);
+    col_182 = tmpvar_266;
+  };
+  vec3 tmpvar_267;
+  tmpvar_267 = col_182;
+  gl_FragColor.xyz = tmpvar_267.xyz.xyz;
+  float tmpvar_268;
+  tmpvar_268 = 1.0;
+  gl_FragColor.w = vec4(tmpvar_268).w;
+}
+

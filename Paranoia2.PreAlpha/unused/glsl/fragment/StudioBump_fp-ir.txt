@@ -1,0 +1,131 @@
+#version 130
+uniform sampler2D u_ColorMap;
+uniform sampler2D u_NormalMap;
+uniform sampler2D u_GlossMap;
+uniform vec3 u_LightDiffuse;
+uniform vec3 u_LightAmbient;
+uniform int u_FaceFlags;
+uniform float u_GlossExponent;
+in vec2 var_TexCoord;
+in mat3 var_OS2TSMatrix;
+in vec3 var_ViewDir;
+in vec3 var_LightDir;
+void main ()
+{
+  float maxIllum_1;
+  vec3 illum_2;
+  vec3 specular_3;
+  vec4 diffuse_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = texture2D (u_ColorMap, var_TexCoord);
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  diffuse_4 = tmpvar_6;
+  vec3 tmpvar_7;
+  tmpvar_7 = vec3(0.0, 0.0, 0.0);
+  specular_3 = tmpvar_7;
+  if (bool((u_FaceFlags & 4))) {
+    vec3 tmpvar_8;
+    tmpvar_8 = vec3(1.0, 1.0, 1.0);
+    illum_2 = tmpvar_8;
+  } else {
+    if (bool((u_FaceFlags & 1))) {
+      vec3 tmpvar_9;
+      tmpvar_9 = (u_LightAmbient + (u_LightDiffuse * 0.8));
+      illum_2 = tmpvar_9;
+    } else {
+      vec3 N_10;
+      vec3 L_11;
+      vec3 V_12;
+      vec3 tmpvar_13;
+      tmpvar_13 = normalize (var_ViewDir);
+      vec3 tmpvar_14;
+      tmpvar_14 = tmpvar_13;
+      V_12 = tmpvar_14;
+      vec3 tmpvar_15;
+      tmpvar_15 = normalize (var_LightDir);
+      vec3 tmpvar_16;
+      tmpvar_16 = tmpvar_15;
+      L_11 = tmpvar_16;
+      vec4 tmpvar_17;
+      tmpvar_17 = texture2D (u_NormalMap, var_TexCoord);
+      vec3 tmpvar_18;
+      tmpvar_18 = normalize ((2.0 * (tmpvar_17.xyz - 0.5)));
+      vec3 tmpvar_19;
+      tmpvar_19 = tmpvar_18;
+      N_10 = tmpvar_19;
+      vec4 tmpvar_20;
+      tmpvar_20 = texture2D (u_GlossMap, var_TexCoord);
+      vec3 tmpvar_21;
+      tmpvar_21 = (tmpvar_20.xyz * u_LightDiffuse);
+      specular_3 = tmpvar_21;
+      vec3 tmpvar_22;
+      tmpvar_22 = reflect (-(L_11), N_10);
+      float tmpvar_23;
+      tmpvar_23 = dot (tmpvar_22, V_12);
+      float tmpvar_24;
+      tmpvar_24 = max (tmpvar_23, 0.0);
+      float tmpvar_25;
+      tmpvar_25 = pow (tmpvar_24, u_GlossExponent);
+      vec3 tmpvar_26;
+      tmpvar_26 = (specular_3 * tmpvar_25);
+      specular_3 = tmpvar_26;
+      float tmpvar_27;
+      tmpvar_27 = dot (N_10, L_11);
+      float tmpvar_28;
+      tmpvar_28 = max (tmpvar_27, 0.0);
+      vec3 tmpvar_29;
+      tmpvar_29 = (u_LightAmbient + (u_LightDiffuse * tmpvar_28));
+      illum_2 = tmpvar_29;
+    };
+  };
+  float tmpvar_30;
+  tmpvar_30 = max (0.0, illum_2.x);
+  float tmpvar_31;
+  tmpvar_31 = tmpvar_30;
+  illum_2.x = tmpvar_31;
+  float tmpvar_32;
+  tmpvar_32 = max (0.0, illum_2.y);
+  float tmpvar_33;
+  tmpvar_33 = tmpvar_32;
+  illum_2.y = vec2(tmpvar_33).y;
+  float tmpvar_34;
+  tmpvar_34 = max (0.0, illum_2.z);
+  float tmpvar_35;
+  tmpvar_35 = tmpvar_34;
+  illum_2.z = vec3(tmpvar_35).z;
+  float tmpvar_36;
+  tmpvar_36 = max (illum_2.y, illum_2.z);
+  float tmpvar_37;
+  tmpvar_37 = max (illum_2.x, tmpvar_36);
+  float tmpvar_38;
+  tmpvar_38 = tmpvar_37;
+  maxIllum_1 = tmpvar_38;
+  if ((maxIllum_1 > 1.0)) {
+    vec3 tmpvar_39;
+    tmpvar_39 = (illum_2 * (1.0 / maxIllum_1));
+    illum_2 = tmpvar_39;
+  };
+  vec3 tmpvar_40;
+  tmpvar_40 = (diffuse_4.xyz * illum_2);
+  diffuse_4.xyz = tmpvar_40.xyz.xyz;
+  vec3 tmpvar_41;
+  tmpvar_41 = (diffuse_4.xyz + specular_3);
+  diffuse_4.xyz = tmpvar_41.xyz.xyz;
+  if ((bool((u_FaceFlags & 64)) && (diffuse_4.w <= 0.5))) {
+    discard;
+    return;
+  };
+  if (bool((u_FaceFlags & 32))) {
+    float tmpvar_42;
+    tmpvar_42 = 0.5;
+    diffuse_4.w = vec4(tmpvar_42).w;
+  };
+  vec3 tmpvar_43;
+  tmpvar_43 = (diffuse_4.xyz * 2.0);
+  diffuse_4.xyz = tmpvar_43.xyz.xyz;
+  vec4 tmpvar_44;
+  tmpvar_44 = diffuse_4;
+  gl_FragColor = tmpvar_44;
+}
+

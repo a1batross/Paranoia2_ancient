@@ -1,0 +1,200 @@
+/*
+StudioBumpDynLight_fp.glsl - directional and omnidirectional lighting program with bumpmapping
+Copyright (C) 2014 Uncle Mike
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+*/
+
+#version 130
+
+#define STUDIO_NF_FLATSHADE		1
+#define STUDIO_NF_CHROME		2
+#define STUDIO_NF_FULLBRIGHT		4
+#define STUDIO_NF_COLORMAP		8	// can changed by colormap command
+#define STUDIO_NF_BLENDED		16	// rendering as semiblended
+#define STUDIO_NF_ADDITIVE		32	// rendering with additive mode
+#define STUDIO_NF_TRANSPARENT		64	// use texture with alpha channel
+
+uniform sampler2D		u_ProjectMap;
+uniform sampler1D		u_AttnZMap;
+uniform sampler2D		u_ColorMap;
+uniform sampler2D		u_NormalMap;
+uniform sampler2D		u_GlossMap;
+uniform sampler2DShadow	u_ShadowMap;
+
+uniform vec3		u_LightDiffuse;
+uniform int		u_FaceFlags;
+uniform int		u_PointLight;
+uniform int		u_ShadowMode;
+uniform float		u_GlossExponent;
+uniform float		u_ScreenWidth;	// shadowmap width
+uniform float		u_ScreenHeight;	// shadowmap height
+
+varying vec2		var_TexCoord;
+varying mat3		var_OS2TSMatrix;
+varying vec3		var_ViewDir;
+varying vec3		var_LightDir;
+
+#define u_AttnXYMap		u_ProjectMap	// just for consistency
+
+float ComputeShadow( void )
+{
+	if( u_ShadowMode == 0 || bool( u_FaceFlags & STUDIO_NF_FULLBRIGHT ) || bool( u_PointLight ))
+	{
+		// no shadows
+		return 1.0;
+	}
+	else
+	{
+		float dtW  = 1.0 / u_ScreenWidth;
+		float dtH  = 1.0 / u_ScreenHeight;
+		vec3 coord = vec3( gl_TexCoord[2].xyz / gl_TexCoord[2].w );
+
+		coord.s = float( clamp( float( coord.s ), dtW, 1.0 - dtW ));
+		coord.t = float( clamp( float( coord.t ), dtH, 1.0 - dtH ));
+		coord.r = float( clamp( float( coord.r ), 0.0, 1.0 ));
+
+		float shadow0 = float( shadow2D( u_ShadowMap, coord ).r );
+
+		// PCF 2x2
+		if( u_ShadowMode > 1 )
+		{
+			vec3 coord2 = coord + vec3( 0.0, dtH, 0.0 );
+			float shadow1 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+			coord2 = coord + vec3( dtW, dtH, 0.0 );
+			float shadow2 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+			coord2 = coord + vec3( dtW, 0.0, 0.0 );
+			float shadow3 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+			// PCF 3x3
+			if( u_ShadowMode > 2 )
+			{
+				coord2 = coord + vec3( -dtW, 0.0, 0.0 );
+				float shadow4 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+				coord2 = coord + vec3( -dtW, -dtH, 0.0 );
+				float shadow5 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+				coord2 = coord + vec3( 0.0, -dtH, 0.0 );
+				float shadow6 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+				coord2 = coord + vec3( dtW, -dtH, 0.0 );
+				float shadow7 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+				coord2 = coord + vec3( -dtW, dtH, 0.0 );
+				float shadow8 = float( shadow2D( u_ShadowMap, coord2 ).r );
+
+				return (shadow0 + shadow1 + shadow2 + shadow3 + shadow4 + shadow5 + shadow6 + shadow7 + shadow8) * 0.11;
+			}
+			else
+			{
+				return (shadow0 + shadow1 + shadow2 + shadow3) * 0.25;
+			}
+		}
+		else
+		{
+			return shadow0;
+		}
+	}
+}
+
+void main( void )
+{
+	// compute the diffuse term
+	vec4 diffuse = texture2D( u_ColorMap, var_TexCoord );
+
+	if( bool( u_FaceFlags & STUDIO_NF_TRANSPARENT ) && diffuse.a <= 0.5 )
+	{
+		discard;
+		return;
+	}
+
+	vec3 specular = vec3( 0.0, 0.0, 0.0 );
+
+	vec3 light;
+
+	// compute the light term
+	if( bool( u_FaceFlags & STUDIO_NF_FULLBRIGHT ))
+	{
+		light = vec3( 1.0, 1.0, 1.0 );
+	}
+	else if( bool( u_FaceFlags & STUDIO_NF_FLATSHADE ))
+	{
+		// ambient lighting
+		light = u_LightDiffuse * 0.8;
+	}
+	else
+	{
+		if( bool( u_PointLight ))
+		{
+			light = u_LightDiffuse;
+
+			// attenuation XY (original code using GL_ONE_MINUS_SRC_ALPHA)
+			light *= ( 1.0 - texture2D( u_AttnXYMap, gl_TexCoord[0].st ).a );
+
+			// attenuation Z (original code using GL_ONE_MINUS_SRC_ALPHA)
+			light *= ( 1.0 - texture1D( u_AttnZMap, gl_TexCoord[1].s ).a );
+		}
+		else
+		{
+			light = texture2DProj( u_ProjectMap, gl_TexCoord[0] ).rgb * u_LightDiffuse;
+
+			// linear attenuation texture
+			light *= texture1D( u_AttnZMap, gl_TexCoord[1].s ).r;
+		}
+
+		// bump mapping
+
+		// compute view direction in tangent space
+		vec3 V = normalize( var_ViewDir );
+
+		// compute light direction in tangent space
+		vec3 L = normalize( var_LightDir );
+
+		// compute normal in tangent space from normalmap
+		vec3 N = normalize( 2.0 * ( texture2D( u_NormalMap, var_TexCoord ).xyz - 0.5 ));
+
+		// compute the specular term
+		specular = texture2D( u_GlossMap, var_TexCoord ).rgb * light;
+		specular *= pow( max( dot( reflect( -L, N ), V ), 0.0 ), u_GlossExponent );
+
+		// compute the light term
+		light *= max( dot( N, L ), 0.0 );
+	}
+
+	light *= ComputeShadow();
+
+	// catch negative lighting
+	light.x = max( 0.0, light.x );
+	light.y = max( 0.0, light.y );
+	light.z = max( 0.0, light.z );
+
+	// normalize light	
+	float maxLight = max( light.x, max( light.y, light.z ));
+	if( maxLight > 1.0 ) light *= ( 1.0 / maxLight );
+
+	diffuse.rgb *= light;
+	diffuse.rgb += specular;
+
+	if( bool( u_FaceFlags & STUDIO_NF_ADDITIVE ))
+	{
+		diffuse.a = 0.5;
+	}
+
+	diffuse.rgb *= light.rgb;
+
+	diffuse.rgb *= 2.0;	// GL_RGB_SCALE_ARB 2
+
+	// compute final color
+	gl_FragColor = diffuse;
+}

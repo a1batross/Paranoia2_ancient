@@ -1,0 +1,37 @@
+#version 130
+uniform sampler2D u_ColorMap;
+uniform vec3 u_LightDir;
+uniform vec3 u_LightDiffuse;
+uniform vec3 u_LightAmbient;
+uniform int u_FaceFlags;
+in vec3 var_Normal;
+in vec3 var_Color;
+in vec2 var_TexCoord;
+void main ()
+{
+  vec4 diffuse_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture2D (u_ColorMap, var_TexCoord);
+  vec4 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  diffuse_1 = tmpvar_3;
+  if ((bool((u_FaceFlags & 64)) && (diffuse_1.w <= 0.5))) {
+    discard;
+    return;
+  };
+  vec3 tmpvar_4;
+  tmpvar_4 = (diffuse_1.xyz * var_Color);
+  diffuse_1.xyz = tmpvar_4.xyz.xyz;
+  if (bool((u_FaceFlags & 32))) {
+    float tmpvar_5;
+    tmpvar_5 = 0.5;
+    diffuse_1.w = vec4(tmpvar_5).w;
+  };
+  vec3 tmpvar_6;
+  tmpvar_6 = (diffuse_1.xyz * 2.0);
+  diffuse_1.xyz = tmpvar_6.xyz.xyz;
+  vec4 tmpvar_7;
+  tmpvar_7 = diffuse_1;
+  gl_FragColor = tmpvar_7;
+}
+

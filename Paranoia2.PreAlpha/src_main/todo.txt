@@ -1,0 +1,6 @@
+do revision for all shaders
+optimize new renderer
+optimize shadow pass
+material system for damage
+shadows from sun
+new grass system

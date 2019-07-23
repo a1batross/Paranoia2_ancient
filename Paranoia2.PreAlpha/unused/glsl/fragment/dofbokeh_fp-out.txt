@@ -1,0 +1,116 @@
+uniform float u_ScreenWidth;
+uniform float u_ScreenHeight;
+uniform int u_GenericCondition;
+uniform float u_FocalDepth;
+uniform float u_FocalLength;
+uniform float u_FStop;
+uniform float u_zFar;
+uniform sampler2D u_ColorMap;
+uniform sampler2D u_DepthMap;
+vec2 texel;
+void main ()
+{
+  vec2 tmpvar_1;
+  tmpvar_1.x = (1.0/(u_ScreenWidth));
+  tmpvar_1.y = (1.0/(u_ScreenHeight));
+  texel = tmpvar_1;
+  vec3 col_2;
+  float h_3;
+  float w_4;
+  float blur_5;
+  float depth_6;
+  depth_6 = ((-(u_zFar) * 4.0) / ((texture2D (u_DepthMap, gl_TexCoord[0].xy).x * 
+    (u_zFar - 4.0)
+  ) - u_zFar));
+  float tmpvar_7;
+  tmpvar_7 = (u_FocalDepth * 1000.0);
+  float tmpvar_8;
+  tmpvar_8 = (depth_6 * 1000.0);
+  blur_5 = (abs((
+    ((tmpvar_8 * u_FocalLength) / (tmpvar_8 - u_FocalLength))
+   - 
+    ((tmpvar_7 * u_FocalLength) / (tmpvar_7 - u_FocalLength))
+  )) * ((tmpvar_7 - u_FocalLength) / (
+    (tmpvar_7 * u_FStop)
+   * 0.03)));
+  float tmpvar_9;
+  tmpvar_9 = clamp (blur_5, 0.0, 1.0);
+  blur_5 = tmpvar_9;
+  vec2 coord_10;
+  coord_10 = gl_TexCoord[0].xy;
+  vec2 tmpvar_11;
+  tmpvar_11.x = ((clamp (
+    fract((sin(dot (coord_10, vec2(12.9898, 78.233))) * 43758.5))
+  , 0.0, 1.0) * 2.0) - 1.0);
+  tmpvar_11.y = ((clamp (
+    fract((sin(dot (coord_10, vec2(25.9796, 156.466))) * 43758.5))
+  , 0.0, 1.0) * 2.0) - 1.0);
+  vec2 tmpvar_12;
+  tmpvar_12 = ((tmpvar_11 * 0.0001) * tmpvar_9);
+  w_4 = ((tmpvar_1.x * tmpvar_9) + tmpvar_12.x);
+  h_3 = ((tmpvar_1.y * tmpvar_9) + tmpvar_12.y);
+  col_2 = vec3(0.0, 0.0, 0.0);
+  if ((tmpvar_9 < 0.05)) {
+    col_2 = texture2D (u_ColorMap, gl_TexCoord[0].xy).xyz;
+  } else {
+    float s_14;
+    int ringsamples_15;
+    col_2 = texture2D (u_ColorMap, gl_TexCoord[0].xy).xyz;
+    s_14 = 1.0;
+    for (int i_13 = 1; i_13 <= 3; i_13++) {
+      ringsamples_15 = (i_13 * 3);
+      for (int j_16; j_16 < ringsamples_15; j_16++) {
+        float tmpvar_17;
+        tmpvar_17 = (6.28319 / float(ringsamples_15));
+        vec2 tmpvar_18;
+        tmpvar_18.x = ((cos(
+          (float(j_16) * tmpvar_17)
+        ) * float(i_13)) * w_4);
+        tmpvar_18.y = ((sin(
+          (float(j_16) * tmpvar_17)
+        ) * float(i_13)) * h_3);
+        vec2 coords_19;
+        coords_19 = (gl_TexCoord[0].xy + tmpvar_18);
+        vec3 col_20;
+        col_20.x = texture2D (u_ColorMap, (coords_19 + ((vec2(0.0, 0.7) * texel) * blur_5))).x;
+        col_20.y = texture2D (u_ColorMap, (coords_19 + ((vec2(-0.6062, -0.35) * texel) * blur_5))).y;
+        col_20.z = texture2D (u_ColorMap, (coords_19 + ((vec2(0.6062, -0.35) * texel) * blur_5))).z;
+        col_2 = (col_2 + (col_20 * mix (1.0, 
+          (float(i_13) / 3.0)
+        , 0.5)));
+        s_14 = (s_14 + mix (1.0, (
+          float(i_13)
+         / 3.0), 0.5));
+      };
+    };
+    col_2 = (col_2 / s_14);
+  };
+  if (bool(u_GenericCondition)) {
+    float tmpvar_21;
+    tmpvar_21 = (0.002 * depth_6);
+    float tmpvar_22;
+    tmpvar_22 = clamp ((tmpvar_9 / tmpvar_21), 0.0, 1.0);
+    float tmpvar_23;
+    tmpvar_23 = clamp ((tmpvar_22 * (tmpvar_22 * 
+      (3.0 - (2.0 * tmpvar_22))
+    )), 0.0, 1.0);
+    float edge0_24;
+    edge0_24 = (1.0 - tmpvar_21);
+    float tmpvar_25;
+    tmpvar_25 = clamp (((tmpvar_9 - edge0_24) / (1.0 - edge0_24)), 0.0, 1.0);
+    col_2 = mix (mix (col_2, vec3(1.0, 0.5, 0.0), (
+      (1.0 - tmpvar_23)
+     * 0.6)), vec3(0.0, 0.5, 1.0), ((
+      (1.0 - clamp ((tmpvar_25 * (tmpvar_25 * 
+        (3.0 - (2.0 * tmpvar_25))
+      )), 0.0, 1.0))
+     - 
+      (1.0 - tmpvar_23)
+    ) * 0.2));
+  };
+  gl_FragColor.xyz = col_2;
+  gl_FragColor.w = 1.0;
+}
+
+
+// inputs: 1, stats: 116 alu 6 tex 6 flow

@@ -1,0 +1,37 @@
+attribute vec3 attr_Position;
+attribute vec2 attr_TexCoord0;
+attribute float attr_BoneIndexes;
+uniform mat4 u_WorldViewProjectionMatrix;
+uniform mat4 u_BoneMatrix[128];
+uniform int u_StudioModel;
+varying vec2 var_TexCoord;
+void main ()
+{
+  vec4 position_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = vec4(0.0, 0.0, 0.0, 1.0);
+  position_1 = tmpvar_2;
+  if (bool(u_StudioModel)) {
+    mat4 boneMatrix_3;
+    mat4 tmpvar_4;
+    tmpvar_4 = u_BoneMatrix[int(attr_BoneIndexes)];
+    boneMatrix_3 = tmpvar_4;
+    vec4 tmpvar_5;
+    tmpvar_5.w = 1.0;
+    tmpvar_5.xyz = attr_Position.xyz;
+    vec3 tmpvar_6;
+    tmpvar_6 = (boneMatrix_3 * tmpvar_5).xyz;
+    position_1.xyz = tmpvar_6.xyz.xyz;
+  } else {
+    vec3 tmpvar_7;
+    tmpvar_7 = attr_Position;
+    position_1.xyz = tmpvar_7.xyz.xyz;
+  };
+  vec4 tmpvar_8;
+  tmpvar_8 = (u_WorldViewProjectionMatrix * position_1);
+  gl_Position = tmpvar_8;
+  vec2 tmpvar_9;
+  tmpvar_9 = attr_TexCoord0;
+  var_TexCoord = tmpvar_9;
+}
+

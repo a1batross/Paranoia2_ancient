@@ -1,0 +1,51 @@
+#version 130
+uniform sampler2D u_ColorMap;
+uniform int u_GenericCondition;
+uniform float u_BlurFactor;
+void main ()
+{
+  vec2 dx_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
+  vec4 tmpvar_3;
+  tmpvar_3 = (texture (u_ColorMap, tmpvar_2) * 0.134598);
+  if (bool(u_GenericCondition)) {
+    dx_1 = (vec2(0.0, 0.01953) * u_BlurFactor);
+  } else {
+    dx_1 = (vec2(0.01953, 0.0) * u_BlurFactor);
+  };
+  vec2 tmpvar_4;
+  tmpvar_4 = (dx_1 + dx_1);
+  vec2 tmpvar_5;
+  tmpvar_5 = (tmpvar_4 + dx_1);
+  vec2 tmpvar_6;
+  tmpvar_6 = (tmpvar_5 + dx_1);
+  vec2 tmpvar_7;
+  tmpvar_7 = (tmpvar_6 + dx_1);
+  vec2 tmpvar_8;
+  tmpvar_8 = (tmpvar_7 + dx_1);
+  vec2 tmpvar_9;
+  tmpvar_9 = (tmpvar_8 + dx_1);
+  gl_FragColor = (((
+    ((((tmpvar_3 + 
+      ((texture (u_ColorMap, (tmpvar_2 + dx_1)) + texture (u_ColorMap, (tmpvar_2 - dx_1))) * 0.127325)
+    ) + (
+      (texture (u_ColorMap, (tmpvar_2 + tmpvar_4)) + texture (u_ColorMap, (tmpvar_2 - tmpvar_4)))
+     * 0.107778)) + ((texture (u_ColorMap, 
+      (tmpvar_2 + tmpvar_5)
+    ) + texture (u_ColorMap, 
+      (tmpvar_2 - tmpvar_5)
+    )) * 0.081638)) + ((texture (u_ColorMap, (tmpvar_2 + tmpvar_6)) + texture (u_ColorMap, (tmpvar_2 - tmpvar_6))) * 0.055335))
+   + 
+    ((texture (u_ColorMap, (tmpvar_2 + tmpvar_7)) + texture (u_ColorMap, (tmpvar_2 - tmpvar_7))) * 0.033562)
+  ) + (
+    (texture (u_ColorMap, (tmpvar_2 + tmpvar_8)) + texture (u_ColorMap, (tmpvar_2 - tmpvar_8)))
+   * 0.018216)) + ((texture (u_ColorMap, 
+    (tmpvar_2 + tmpvar_9)
+  ) + texture (u_ColorMap, 
+    (tmpvar_2 - tmpvar_9)
+  )) * 0.008847));
+}
+
+
+// inputs: 1, stats: 45 alu 15 tex 1 flow

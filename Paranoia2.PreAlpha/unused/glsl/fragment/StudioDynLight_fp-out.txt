@@ -1,0 +1,120 @@
+#version 130
+uniform sampler2D u_ProjectMap;
+uniform sampler1D u_AttnZMap;
+uniform sampler2D u_ColorMap;
+uniform sampler2DShadow u_ShadowMap;
+uniform vec3 u_LightDiffuse;
+uniform int u_FaceFlags;
+uniform int u_PointLight;
+uniform int u_ShadowMode;
+uniform float u_ScreenWidth;
+uniform float u_ScreenHeight;
+in float var_LightCos;
+in vec2 var_TexCoord;
+in vec4 var_ProjCoord[3];
+void main ()
+{
+  vec3 light_1;
+  vec4 diffuse_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = texture (u_ColorMap, var_TexCoord);
+  diffuse_2 = tmpvar_3;
+  if ((bool((u_FaceFlags & 64)) && (tmpvar_3.w <= 0.5))) {
+    discard;
+    return;
+  };
+  if (bool((u_FaceFlags & 4))) {
+    light_1 = vec3(1.0, 1.0, 1.0);
+  } else {
+    if (bool(u_PointLight)) {
+      light_1 = (((u_LightDiffuse * 
+        (1.0 - texture (u_ProjectMap, var_ProjCoord[0].xy).w)
+      ) * (1.0 - texture (u_AttnZMap, var_ProjCoord[1].x).w)) * var_LightCos);
+    } else {
+      light_1 = (((textureProj (u_ProjectMap, var_ProjCoord[0]).xyz * u_LightDiffuse) * texture (u_AttnZMap, var_ProjCoord[1].x).x) * ((var_LightCos - -0.9) / 1.9));
+    };
+  };
+  float tmpvar_4;
+  if ((((u_ShadowMode == 0) || bool(
+    (u_FaceFlags & 4)
+  )) || bool(u_PointLight))) {
+    tmpvar_4 = 1.0;
+  } else {
+    vec3 coord_5;
+    float tmpvar_6;
+    tmpvar_6 = (1.0/(u_ScreenWidth));
+    float tmpvar_7;
+    tmpvar_7 = (1.0/(u_ScreenHeight));
+    vec3 tmpvar_8;
+    tmpvar_8 = (var_ProjCoord[2].xyz / var_ProjCoord[2].w);
+    coord_5.z = tmpvar_8.z;
+    coord_5.x = clamp (tmpvar_8.x, tmpvar_6, (1.0 - tmpvar_6));
+    coord_5.y = clamp (tmpvar_8.y, tmpvar_7, (1.0 - tmpvar_7));
+    coord_5.x = clamp (coord_5.x, 0.0, 1.0);
+    vec4 tmpvar_9;
+    tmpvar_9 = texture (u_ShadowMap, coord_5);
+    if ((u_ShadowMode > 1)) {
+      vec3 tmpvar_10;
+      tmpvar_10.xz = vec2(0.0, 0.0);
+      tmpvar_10.y = tmpvar_7;
+      vec4 tmpvar_11;
+      tmpvar_11 = texture (u_ShadowMap, (coord_5 + tmpvar_10));
+      vec3 tmpvar_12;
+      tmpvar_12.z = 0.0;
+      tmpvar_12.x = tmpvar_6;
+      tmpvar_12.y = tmpvar_7;
+      vec4 tmpvar_13;
+      tmpvar_13 = texture (u_ShadowMap, (coord_5 + tmpvar_12));
+      vec3 tmpvar_14;
+      tmpvar_14.yz = vec2(0.0, 0.0);
+      tmpvar_14.x = tmpvar_6;
+      vec4 tmpvar_15;
+      tmpvar_15 = texture (u_ShadowMap, (coord_5 + tmpvar_14));
+      if ((u_ShadowMode > 2)) {
+        vec3 tmpvar_16;
+        tmpvar_16.yz = vec2(0.0, 0.0);
+        tmpvar_16.x = -(tmpvar_6);
+        vec3 tmpvar_17;
+        tmpvar_17.z = 0.0;
+        tmpvar_17.x = -(tmpvar_6);
+        tmpvar_17.y = -(tmpvar_7);
+        vec3 tmpvar_18;
+        tmpvar_18.xz = vec2(0.0, 0.0);
+        tmpvar_18.y = -(tmpvar_7);
+        vec3 tmpvar_19;
+        tmpvar_19.z = 0.0;
+        tmpvar_19.x = tmpvar_6;
+        tmpvar_19.y = -(tmpvar_7);
+        vec3 tmpvar_20;
+        tmpvar_20.z = 0.0;
+        tmpvar_20.x = -(tmpvar_6);
+        tmpvar_20.y = tmpvar_7;
+        tmpvar_4 = (((
+          ((((
+            ((tmpvar_9.x + tmpvar_11.x) + tmpvar_13.x)
+           + tmpvar_15.x) + texture (u_ShadowMap, (coord_5 + tmpvar_16)).x) + texture (u_ShadowMap, (coord_5 + tmpvar_17)).x) + texture (u_ShadowMap, (coord_5 + tmpvar_18)).x)
+         + texture (u_ShadowMap, 
+          (coord_5 + tmpvar_19)
+        ).x) + texture (u_ShadowMap, (coord_5 + tmpvar_20)).x) * 0.11);
+      } else {
+        tmpvar_4 = (((
+          (tmpvar_9.x + tmpvar_11.x)
+         + tmpvar_13.x) + tmpvar_15.x) * 0.25);
+      };
+    } else {
+      tmpvar_4 = tmpvar_9.x;
+    };
+  };
+  vec3 tmpvar_21;
+  tmpvar_21 = (light_1 * tmpvar_4);
+  light_1 = tmpvar_21;
+  if (bool((u_FaceFlags & 32))) {
+    diffuse_2.w = 0.5;
+  };
+  diffuse_2.xyz = (tmpvar_3.xyz * tmpvar_21);
+  diffuse_2.xyz = (diffuse_2.xyz * 2.0);
+  gl_FragColor = diffuse_2;
+}
+
+
+// inputs: 3, stats: 76 alu 15 tex 8 flow

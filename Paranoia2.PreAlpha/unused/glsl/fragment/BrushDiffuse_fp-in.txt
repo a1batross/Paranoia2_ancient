@@ -1,0 +1,92 @@
+/*
+BrushDiffuse_fp.glsl - draw world and brushmodels
+Copyright (C) 2014 Uncle Mike
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+*/
+
+#version 130
+
+#define BRUSH_TRANSPARENT	1		// alpha-transparent
+#define BRUSH_FULLBRIGHT	2		// ignore lightmap for this surface (probably water)
+#define BRUSH_HAS_DETAIL	4		// has detail texture
+#define BRUSH_HAS_BUMP	8		// has normalmap
+#define BRUSH_HAS_PARALLAX	16		// has heightmap
+#define BRUSH_TWOSIDE	32		// some types of water
+#define BRUSH_CONVEYOR	64		// scrolled texture
+
+uniform sampler2D		u_ColorMap;
+uniform sampler2D		u_BaseLightMap;
+uniform sampler2D		u_AddLightMap;
+uniform sampler2D		u_DeluxeMap;
+uniform sampler2D		u_NormalMap;
+uniform sampler2D		u_GlossMap;
+uniform sampler2D		u_DetailMap;
+
+uniform int		u_FaceFlags;
+uniform int		u_DetailMode;
+uniform int		u_BumpMode;
+uniform float		u_GlossExponent;
+
+varying vec2		var_TexDiffuse;
+varying vec2		var_TexLight;
+varying vec2		var_TexDetail;
+varying vec3		var_ViewDir;
+
+void main( void )
+{
+	// compute the diffuse term
+	vec4 diffuse = texture2D( u_ColorMap, var_TexDiffuse );
+
+	if( bool( u_FaceFlags & BRUSH_TRANSPARENT ) && diffuse.a <= 0.5 )
+	{
+		discard;
+		return;
+	}
+
+	// apply ambient light
+	vec3 baselight = texture2D( u_BaseLightMap, var_TexLight ).rgb;
+
+	// apply detail texture (if present)
+	if( bool( u_DetailMode > 0 ) && bool( u_FaceFlags & BRUSH_HAS_DETAIL ))
+		diffuse.rgb *= texture2D( u_DetailMap, var_TexDetail ).rgb * 2.0;
+
+	if( bool( u_BumpMode > 0 ))
+	{
+		// compute light vector
+		vec3 L = normalize(( 2.0 * ( texture2D( u_DeluxeMap, var_TexLight ).xyz - 0.5 )));
+
+		// compute material normal
+		vec3 N = normalize(( 2.0 * ( texture2D( u_NormalMap, var_TexDiffuse ).xyz - 0.5 )));
+
+		// compute dot3 bumpmapping
+		vec3 addlight = texture2D( u_AddLightMap, var_TexLight ).rgb * max( dot( N, L ), 0.0 );
+
+		diffuse.rgb *= (baselight + addlight); 
+
+		// compute specular
+		if( bool( u_BumpMode > 1 ))
+		{
+			vec3 V = normalize( var_ViewDir );
+
+			// compute the specular term
+			vec3 specular = texture2D( u_GlossMap, var_TexDiffuse ).rgb * addlight;
+			specular *= pow( max( dot( reflect( -L, N ), V ), 0.0 ), u_GlossExponent );
+			diffuse.rgb += specular;
+		}
+	}
+	else
+	{
+		diffuse.rgb *= baselight;
+	}
+
+	gl_FragColor = diffuse * 2.0;	// GL_ARB_SCALE 2.0
+}

@@ -1,0 +1,144 @@
+#version 130
+uniform sampler2D u_ProjectMap;
+uniform sampler1D u_AttnZMap;
+uniform sampler2D u_ColorMap;
+uniform sampler2D u_NormalMap;
+uniform sampler2D u_GlossMap;
+uniform sampler2DShadow u_ShadowMap;
+uniform vec3 u_LightDiffuse;
+uniform int u_FaceFlags;
+uniform int u_PointLight;
+uniform int u_ShadowMode;
+uniform float u_GlossExponent;
+uniform float u_ScreenWidth;
+uniform float u_ScreenHeight;
+in vec2 var_TexCoord;
+in vec3 var_ViewDir;
+in vec3 var_LightDir;
+void main ()
+{
+  vec3 light_1;
+  vec3 specular_2;
+  vec4 diffuse_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = texture (u_ColorMap, var_TexCoord);
+  diffuse_3 = tmpvar_4;
+  if ((bool((u_FaceFlags & 64)) && (tmpvar_4.w <= 0.5))) {
+    discard;
+    return;
+  };
+  specular_2 = vec3(0.0, 0.0, 0.0);
+  if (bool((u_FaceFlags & 4))) {
+    light_1 = vec3(1.0, 1.0, 1.0);
+  } else {
+    if (bool((u_FaceFlags & 1))) {
+      light_1 = (u_LightDiffuse * 0.8);
+    } else {
+      if (bool(u_PointLight)) {
+        light_1 = ((u_LightDiffuse * (1.0 - texture (u_ProjectMap, gl_TexCoord[0].xy).w)) * (1.0 - texture (u_AttnZMap, gl_TexCoord[1].x).w));
+      } else {
+        light_1 = ((textureProj (u_ProjectMap, gl_TexCoord[0]).xyz * u_LightDiffuse) * texture (u_AttnZMap, gl_TexCoord[1].x).x);
+      };
+      vec3 tmpvar_5;
+      tmpvar_5 = normalize(var_LightDir);
+      vec3 tmpvar_6;
+      tmpvar_6 = normalize((2.0 * (texture (u_NormalMap, var_TexCoord).xyz - 0.5)));
+      vec3 I_7;
+      I_7 = -(tmpvar_5);
+      specular_2 = ((texture (u_GlossMap, var_TexCoord).xyz * light_1) * pow (max (
+        dot ((I_7 - (2.0 * (
+          dot (tmpvar_6, I_7)
+         * tmpvar_6))), normalize(var_ViewDir))
+      , 0.0), u_GlossExponent));
+      light_1 = (light_1 * max (dot (tmpvar_6, tmpvar_5), 0.0));
+    };
+  };
+  float tmpvar_8;
+  if ((((u_ShadowMode == 0) || bool(
+    (u_FaceFlags & 4)
+  )) || bool(u_PointLight))) {
+    tmpvar_8 = 1.0;
+  } else {
+    vec3 coord_9;
+    float tmpvar_10;
+    tmpvar_10 = (1.0/(u_ScreenWidth));
+    float tmpvar_11;
+    tmpvar_11 = (1.0/(u_ScreenHeight));
+    vec3 tmpvar_12;
+    tmpvar_12 = (gl_TexCoord[2].xyz / gl_TexCoord[2].w);
+    coord_9.z = tmpvar_12.z;
+    coord_9.x = clamp (tmpvar_12.x, tmpvar_10, (1.0 - tmpvar_10));
+    coord_9.y = clamp (tmpvar_12.y, tmpvar_11, (1.0 - tmpvar_11));
+    coord_9.x = clamp (coord_9.x, 0.0, 1.0);
+    vec4 tmpvar_13;
+    tmpvar_13 = texture (u_ShadowMap, coord_9);
+    if ((u_ShadowMode > 1)) {
+      vec3 tmpvar_14;
+      tmpvar_14.xz = vec2(0.0, 0.0);
+      tmpvar_14.y = tmpvar_11;
+      vec4 tmpvar_15;
+      tmpvar_15 = texture (u_ShadowMap, (coord_9 + tmpvar_14));
+      vec3 tmpvar_16;
+      tmpvar_16.z = 0.0;
+      tmpvar_16.x = tmpvar_10;
+      tmpvar_16.y = tmpvar_11;
+      vec4 tmpvar_17;
+      tmpvar_17 = texture (u_ShadowMap, (coord_9 + tmpvar_16));
+      vec3 tmpvar_18;
+      tmpvar_18.yz = vec2(0.0, 0.0);
+      tmpvar_18.x = tmpvar_10;
+      vec4 tmpvar_19;
+      tmpvar_19 = texture (u_ShadowMap, (coord_9 + tmpvar_18));
+      if ((u_ShadowMode > 2)) {
+        vec3 tmpvar_20;
+        tmpvar_20.yz = vec2(0.0, 0.0);
+        tmpvar_20.x = -(tmpvar_10);
+        vec3 tmpvar_21;
+        tmpvar_21.z = 0.0;
+        tmpvar_21.x = -(tmpvar_10);
+        tmpvar_21.y = -(tmpvar_11);
+        vec3 tmpvar_22;
+        tmpvar_22.xz = vec2(0.0, 0.0);
+        tmpvar_22.y = -(tmpvar_11);
+        vec3 tmpvar_23;
+        tmpvar_23.z = 0.0;
+        tmpvar_23.x = tmpvar_10;
+        tmpvar_23.y = -(tmpvar_11);
+        vec3 tmpvar_24;
+        tmpvar_24.z = 0.0;
+        tmpvar_24.x = -(tmpvar_10);
+        tmpvar_24.y = tmpvar_11;
+        tmpvar_8 = (((
+          ((((
+            ((tmpvar_13.x + tmpvar_15.x) + tmpvar_17.x)
+           + tmpvar_19.x) + texture (u_ShadowMap, (coord_9 + tmpvar_20)).x) + texture (u_ShadowMap, (coord_9 + tmpvar_21)).x) + texture (u_ShadowMap, (coord_9 + tmpvar_22)).x)
+         + texture (u_ShadowMap, 
+          (coord_9 + tmpvar_23)
+        ).x) + texture (u_ShadowMap, (coord_9 + tmpvar_24)).x) * 0.11);
+      } else {
+        tmpvar_8 = (((
+          (tmpvar_13.x + tmpvar_15.x)
+         + tmpvar_17.x) + tmpvar_19.x) * 0.25);
+      };
+    } else {
+      tmpvar_8 = tmpvar_13.x;
+    };
+  };
+  light_1 = max (vec3(0.0, 0.0, 0.0), (light_1 * tmpvar_8));
+  float tmpvar_25;
+  tmpvar_25 = max (light_1.x, max (light_1.y, light_1.z));
+  if ((tmpvar_25 > 1.0)) {
+    light_1 = (light_1 * (1.0/(tmpvar_25)));
+  };
+  diffuse_3.xyz = (tmpvar_4.xyz * light_1);
+  diffuse_3.xyz = (diffuse_3.xyz + specular_2);
+  if (bool((u_FaceFlags & 32))) {
+    diffuse_3.w = 0.5;
+  };
+  diffuse_3.xyz = (diffuse_3.xyz * light_1);
+  diffuse_3.xyz = (diffuse_3.xyz * 2.0);
+  gl_FragColor = diffuse_3;
+}
+
+
+// inputs: 4, stats: 102 alu 17 tex 10 flow

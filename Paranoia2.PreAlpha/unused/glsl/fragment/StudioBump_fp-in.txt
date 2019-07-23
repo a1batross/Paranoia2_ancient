@@ -1,0 +1,107 @@
+/*
+StudioBump_fp.glsl - studio model with bumpmapping effect fragment program
+Copyright (C) 2014 Uncle Mike
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+*/
+
+#version 130
+
+#define STUDIO_NF_FLATSHADE		1
+#define STUDIO_NF_CHROME		2
+#define STUDIO_NF_FULLBRIGHT		4
+#define STUDIO_NF_COLORMAP		8	// can changed by colormap command
+#define STUDIO_NF_BLENDED		16	// rendering as semiblended
+#define STUDIO_NF_ADDITIVE		32	// rendering with additive mode
+#define STUDIO_NF_TRANSPARENT		64	// use texture with alpha channel
+
+uniform sampler2D		u_ColorMap;
+uniform sampler2D		u_NormalMap;
+uniform sampler2D		u_GlossMap;
+
+uniform vec3		u_LightDiffuse;
+uniform vec3		u_LightAmbient;
+uniform int		u_FaceFlags;
+uniform float		u_GlossExponent;
+
+varying vec2		var_TexCoord;
+varying mat3		var_OS2TSMatrix;
+varying vec3		var_ViewDir;
+varying vec3		var_LightDir;
+
+void main( void )
+{
+	// compute the diffuse term
+	vec4 diffuse = texture2D( u_ColorMap, var_TexCoord );
+
+	vec3 specular = vec3( 0.0, 0.0, 0.0 );
+
+	vec3 illum;
+
+	if( bool( u_FaceFlags & STUDIO_NF_FULLBRIGHT ))
+	{
+		// just get fullbright
+		illum = vec3( 1.0, 1.0, 1.0 );
+	}
+	else if( bool( u_FaceFlags & STUDIO_NF_FLATSHADE ))
+	{
+		// ambient lighting
+		illum = u_LightAmbient + u_LightDiffuse * 0.8;
+	}
+	else
+	{
+		// bump mapping
+
+		// compute view direction in tangent space
+		vec3 V = normalize( var_ViewDir );
+
+		// compute light direction in tangent space
+		vec3 L = normalize( var_LightDir );
+
+		// compute normal in tangent space from normalmap
+		vec3 N = normalize( 2.0 * ( texture2D( u_NormalMap, var_TexCoord ).xyz - 0.5 ));
+
+		// compute the specular term
+		specular = texture2D( u_GlossMap, var_TexCoord ).rgb * u_LightDiffuse;
+		specular *= pow( max( dot( reflect( -L, N ), V ), 0.0 ), u_GlossExponent );
+
+		// compute the light term
+		illum = u_LightAmbient + u_LightDiffuse * max( dot( N, L ), 0.0 );
+	}
+
+	// catch negative lighting
+	illum.x = max( 0.0, illum.x );
+	illum.y = max( 0.0, illum.y );
+	illum.z = max( 0.0, illum.z );
+
+	// normalize light	
+	float maxIllum = max( illum.x, max( illum.y, illum.z ));
+	if( maxIllum > 1.0 ) illum *= ( 1.0 / maxIllum );
+
+	diffuse.rgb *= illum;
+	diffuse.rgb += specular;
+
+	if( bool( u_FaceFlags & STUDIO_NF_TRANSPARENT ) && diffuse.a <= 0.5 )
+	{
+		discard;
+		return;
+	}
+
+	if( bool( u_FaceFlags & STUDIO_NF_ADDITIVE ))
+	{
+		diffuse.a = 0.5;
+	}
+
+	diffuse.rgb *= 2.0;	// GL_RGB_SCALE_ARB 2
+
+	// compute final color
+	gl_FragColor = diffuse;
+}

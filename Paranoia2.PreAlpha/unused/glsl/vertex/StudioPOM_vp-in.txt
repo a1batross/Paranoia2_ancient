@@ -1,0 +1,93 @@
+/*
+StudioPOM_vp.glsl - studio model with parallax occlusion mapping vertex program
+Copyright (C) 2014 Uncle Mike
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+*/
+
+#version 130
+
+#define STUDIO_NF_FLATSHADE		1
+#define STUDIO_NF_CHROME		2
+#define STUDIO_NF_FULLBRIGHT		4
+#define STUDIO_NF_COLORMAP		8	// can changed by colormap command
+#define STUDIO_NF_BLENDED		16	// rendering as semiblended
+#define STUDIO_NF_ADDITIVE		32	// rendering with additive mode
+#define STUDIO_NF_TRANSPARENT		64	// use texture with alpha channel
+
+#define MAXSTUDIOBONES		128
+
+attribute vec3		attr_Position;
+attribute vec2		attr_TexCoord0;
+attribute vec3		attr_Normal;
+attribute vec3		attr_Tangent;
+attribute vec3		attr_Binormal;
+attribute float		attr_BoneIndexes;
+
+uniform mat4		u_WorldViewProjectionMatrix;
+uniform mat4		u_BoneMatrix[MAXSTUDIOBONES];
+uniform vec3		u_LightDir;
+uniform vec3		u_LightDiffuse;
+uniform vec3		u_LightAmbient;
+uniform vec3		u_ViewOrigin;
+uniform vec3		u_ViewRight;
+uniform int		u_FaceFlags;
+
+varying vec2		var_TexCoord;
+varying mat3		var_OS2TSMatrix;
+varying vec3		var_ViewDir;
+varying vec3		var_LightDir;
+
+void main( void )
+{
+	vec4 position = vec4( 0.0, 0.0, 0.0, 1.0 );
+
+	// compute hardware skinning
+	mat4 boneMatrix = u_BoneMatrix[int(attr_BoneIndexes)];
+	position.xyz = ( boneMatrix * vec4( attr_Position, 1.0 )).xyz;
+
+	// compute tangent space
+	vec3 vec_Normal = ( boneMatrix * vec4( attr_Normal, 0.0 )).xyz;
+	vec3 vec_Tangent = ( boneMatrix * vec4( attr_Tangent, 0.0 )).xyz;
+	vec3 vec_Binormal = ( boneMatrix * vec4( attr_Binormal, 0.0 )).xyz;
+
+	// construct object-space-to-tangent-space 3x3 matrix
+	var_OS2TSMatrix = mat3(	vec_Tangent.x, vec_Binormal.x, vec_Normal.x,
+				vec_Tangent.y, vec_Binormal.y, vec_Normal.y,
+				vec_Tangent.z, vec_Binormal.z, vec_Normal.z	);
+
+	// transform vertex position into homogenous clip-space
+	gl_Position = u_WorldViewProjectionMatrix * position;
+
+	var_ViewDir = ( var_OS2TSMatrix * ( u_ViewOrigin - position.xyz ));
+
+	var_LightDir = ( var_OS2TSMatrix * u_LightDir );
+
+	if( bool( u_FaceFlags & STUDIO_NF_CHROME ))
+	{
+		// compute chrome texcoords
+		vec3 origin = normalize( -u_ViewOrigin + vec3( boneMatrix[3] ));
+
+		vec3 chromeup = normalize( cross( origin, -u_ViewRight ));
+		vec3 chromeright = normalize( cross( origin, chromeup ));
+		chromeup = -chromeup;	// GoldSrc rules
+
+		// calc s coord
+		var_TexCoord.x = ( dot( vec_Normal, chromeright ) + 1.0 ) * 32.0 * attr_TexCoord0.x;
+
+		// calc t coord
+		var_TexCoord.y = ( dot( vec_Normal, chromeup ) + 1.0 ) * 32.0 * attr_TexCoord0.y;
+	}
+	else
+	{
+		var_TexCoord = attr_TexCoord0;
+	}
+}

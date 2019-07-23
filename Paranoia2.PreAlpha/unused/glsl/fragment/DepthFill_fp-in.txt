@@ -1,0 +1,41 @@
+/*
+DepthFill_fp.glsl - shadowpass shader
+Copyright (C) 2014 Uncle Mike
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+*/
+
+#version 130
+
+#define STUDIO_NF_FLATSHADE		1
+#define STUDIO_NF_CHROME		2
+#define STUDIO_NF_FULLBRIGHT		4
+#define STUDIO_NF_COLORMAP		8	// can changed by colormap command
+#define STUDIO_NF_BLENDED		16	// rendering as semiblended
+#define STUDIO_NF_ADDITIVE		32	// rendering with additive mode
+#define STUDIO_NF_TRANSPARENT		64	// use texture with alpha channel
+
+uniform sampler2D		u_ColorMap;
+uniform int		u_FaceFlags;
+
+varying vec2		var_TexCoord;
+
+void main( void )
+{
+	if( bool( u_FaceFlags & STUDIO_NF_TRANSPARENT ) && texture2D( u_ColorMap, var_TexCoord ).a <= 0.5 )
+	{
+		discard;
+		return;
+	}
+
+	// compute final color
+	gl_FragColor = vec4( 0.0 );
+}

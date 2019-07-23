@@ -1,0 +1,95 @@
+#version 130
+in vec3 attr_Position;
+in vec2 attr_TexCoord0;
+in vec3 attr_Normal;
+in vec3 attr_Tangent;
+in vec3 attr_Binormal;
+in float attr_BoneIndexes;
+uniform int u_PointLight;
+uniform vec3 u_LightDir;
+uniform vec3 u_LightOrigin;
+uniform vec3 u_ViewOrigin;
+uniform vec3 u_ViewRight;
+uniform int u_FaceFlags;
+uniform mat4 u_WorldViewProjectionMatrix;
+uniform mat4 u_BoneMatrix[128];
+out vec2 var_TexCoord;
+out mat3 var_OS2TSMatrix;
+out vec3 var_ViewDir;
+out vec3 var_LightDir;
+void main ()
+{
+  vec3 vec_LightDir_1;
+  vec4 position_2;
+  position_2.w = 1.0;
+  mat4 tmpvar_3;
+  tmpvar_3 = u_BoneMatrix[int(attr_BoneIndexes)];
+  vec4 tmpvar_4;
+  tmpvar_4.w = 1.0;
+  tmpvar_4.xyz = attr_Position;
+  position_2.xyz = (tmpvar_3 * tmpvar_4).xyz;
+  vec4 tmpvar_5;
+  tmpvar_5.w = 0.0;
+  tmpvar_5.xyz = attr_Normal;
+  vec3 tmpvar_6;
+  tmpvar_6 = (tmpvar_3 * tmpvar_5).xyz;
+  vec4 tmpvar_7;
+  tmpvar_7.w = 0.0;
+  tmpvar_7.xyz = attr_Tangent;
+  vec3 tmpvar_8;
+  tmpvar_8 = (tmpvar_3 * tmpvar_7).xyz;
+  vec4 tmpvar_9;
+  tmpvar_9.w = 0.0;
+  tmpvar_9.xyz = attr_Binormal;
+  vec3 tmpvar_10;
+  tmpvar_10 = (tmpvar_3 * tmpvar_9).xyz;
+  mat3 tmpvar_11;
+  tmpvar_11[0].x = tmpvar_8.x;
+  tmpvar_11[0].y = tmpvar_10.x;
+  tmpvar_11[0].z = tmpvar_6.x;
+  tmpvar_11[1].x = tmpvar_8.y;
+  tmpvar_11[1].y = tmpvar_10.y;
+  tmpvar_11[1].z = tmpvar_6.y;
+  tmpvar_11[2].x = tmpvar_8.z;
+  tmpvar_11[2].y = tmpvar_10.z;
+  tmpvar_11[2].z = tmpvar_6.z;
+  var_OS2TSMatrix = tmpvar_11;
+  gl_Position = (u_WorldViewProjectionMatrix * position_2);
+  if (bool(u_PointLight)) {
+    gl_TexCoord[0].x = dot (position_2, gl_ObjectPlaneS[0]);
+    gl_TexCoord[0].y = dot (position_2, gl_ObjectPlaneT[0]);
+    gl_TexCoord[1].x = dot (position_2, gl_ObjectPlaneS[1]);
+    vec_LightDir_1 = (u_LightOrigin - position_2.xyz);
+  } else {
+    vec4 texCoord_12;
+    texCoord_12.x = dot (position_2, gl_ObjectPlaneS[0]);
+    texCoord_12.y = dot (position_2, gl_ObjectPlaneT[0]);
+    texCoord_12.z = dot (position_2, gl_ObjectPlaneR[0]);
+    texCoord_12.w = dot (position_2, gl_ObjectPlaneQ[0]);
+    gl_TexCoord[0] = (gl_TextureMatrix[0] * texCoord_12);
+    gl_TexCoord[1].x = dot (position_2, gl_ObjectPlaneS[1]);
+    gl_TexCoord[2] = (gl_TextureMatrix[2] * texCoord_12);
+    vec_LightDir_1 = u_LightDir;
+  };
+  var_ViewDir = (tmpvar_11 * (u_ViewOrigin - position_2.xyz));
+  var_LightDir = (tmpvar_11 * vec_LightDir_1);
+  if (bool((u_FaceFlags & 2))) {
+    vec3 tmpvar_13;
+    tmpvar_13 = normalize((-(u_ViewOrigin) + tmpvar_3[3].xyz));
+    vec3 b_14;
+    b_14 = -(u_ViewRight);
+    vec3 tmpvar_15;
+    tmpvar_15 = normalize(((tmpvar_13.yzx * b_14.zxy) - (tmpvar_13.zxy * b_14.yzx)));
+    var_TexCoord.x = (((
+      dot (tmpvar_6, normalize(((tmpvar_13.yzx * tmpvar_15.zxy) - (tmpvar_13.zxy * tmpvar_15.yzx))))
+     + 1.0) * 32.0) * attr_TexCoord0.x);
+    var_TexCoord.y = (((
+      dot (tmpvar_6, -(tmpvar_15))
+     + 1.0) * 32.0) * attr_TexCoord0.y);
+  } else {
+    var_TexCoord = attr_TexCoord0;
+  };
+}
+
+
+// inputs: 6, stats: 49 alu 0 tex 2 flow

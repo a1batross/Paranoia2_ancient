@@ -1,0 +1,23 @@
+#version 130
+uniform sampler2D u_ColorMap;
+uniform int u_FaceFlags;
+in vec2 var_TexCoord;
+void main ()
+{
+  bool tmpvar_1;
+  if (bool((u_FaceFlags & 64))) {
+    vec4 tmpvar_2;
+    tmpvar_2 = texture2D (u_ColorMap, var_TexCoord);
+    tmpvar_1 = (tmpvar_2.w <= 0.5);
+  } else {
+    tmpvar_1 = bool(0);
+  };
+  if (tmpvar_1) {
+    discard;
+    return;
+  };
+  vec4 tmpvar_3;
+  tmpvar_3 = vec4(0.0, 0.0, 0.0, 0.0);
+  gl_FragColor = tmpvar_3;
+}
+

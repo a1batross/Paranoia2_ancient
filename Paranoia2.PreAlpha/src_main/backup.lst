@@ -1,0 +1,35 @@
+//=======================================================================
+//			Copyright XashXT Group 2007 ©
+//			list with backup directories
+//=======================================================================
+
+// global stuff
+paranoia_sdk.dsw
+debug.bat
+backup.lst
+backup.bat
+release.bat
+
+cl_dll\
+cl_dll\hl\
+cl_dll\render\
+common\
+dlls\
+engine\
+game_shared\
+mainui\
+mainui\legacy
+p2_launch\
+pm_shared\
+utils\
+utils\common\
+utils\vgui\
+utils\vgui\include\
+utils\vgui\lib\win32_vc6\
+zhlt_bump\
+zhlt_bump\common\
+zhlt_bump\hlbsp\
+zhlt_bump\hlcsg\
+zhlt_bump\hlrad\
+zhlt_bump\hlvis\
+zhlt_bump\template\

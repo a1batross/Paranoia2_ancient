@@ -1,0 +1,8 @@
+void main ()
+{
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  gl_TexCoord[0] = gl_MultiTexCoord0;
+}
+
+
+// inputs: 2, stats: 1 alu 0 tex 0 flow

@@ -1,0 +1,244 @@
+#version 130
+uniform sampler2D u_ProjectMap;
+uniform sampler1D u_AttnZMap;
+uniform sampler2D u_ColorMap;
+uniform sampler2D u_NormalMap;
+uniform sampler2D u_GlossMap;
+uniform sampler2D u_DepthMap;
+uniform sampler2DShadow u_ShadowMap;
+uniform vec3 u_LightDiffuse;
+uniform int u_FaceFlags;
+uniform int u_PointLight;
+uniform int u_ShadowMode;
+uniform int u_ParallaxMode;
+uniform vec2 u_ParallaxScale;
+uniform int u_ParallaxSteps;
+uniform float u_GlossExponent;
+uniform float u_ScreenWidth;
+uniform float u_ScreenHeight;
+in vec2 var_TexCoord;
+in vec3 var_ViewDir;
+in vec3 var_LightDir;
+void main ()
+{
+  vec4 diffuse_1;
+  vec3 light_2;
+  vec2 texcoord_3;
+  vec3 specular_4;
+  specular_4 = vec3(0.0, 0.0, 0.0);
+  texcoord_3 = var_TexCoord;
+  if (bool((u_FaceFlags & 4))) {
+    light_2 = vec3(1.0, 1.0, 1.0);
+  } else {
+    if (bool((u_FaceFlags & 1))) {
+      light_2 = (u_LightDiffuse * 0.8);
+    } else {
+      vec3 L_5;
+      if (bool(u_PointLight)) {
+        light_2 = ((u_LightDiffuse * (1.0 - texture (u_ProjectMap, gl_TexCoord[0].xy).w)) * (1.0 - texture (u_AttnZMap, gl_TexCoord[1].x).w));
+      } else {
+        light_2 = ((textureProj (u_ProjectMap, gl_TexCoord[0]).xyz * u_LightDiffuse) * texture (u_AttnZMap, gl_TexCoord[1].x).x);
+      };
+      vec3 tmpvar_6;
+      tmpvar_6 = normalize(var_ViewDir);
+      L_5 = normalize(var_LightDir);
+      vec2 tmpvar_7;
+      if ((u_ParallaxMode > 1)) {
+        vec4 intersect_9;
+        float delta0_10;
+        float delta1_11;
+        float t0_12;
+        float t1_13;
+        float error_14;
+        vec2 offsetBest_15;
+        float NB1_17;
+        vec2 offset_18;
+        float height_19;
+        float NB0_20;
+        vec2 delta_21;
+        float step_22;
+        float tmpvar_23;
+        float cse_24;
+        cse_24 = float(u_ParallaxSteps);
+        tmpvar_23 = (1.0/(cse_24));
+        step_22 = tmpvar_23;
+        vec2 tmpvar_25;
+        tmpvar_25 = (((2.0 * u_ParallaxScale) * tmpvar_6.xy) / (-(tmpvar_6.z) * cse_24));
+        delta_21 = tmpvar_25;
+        NB0_20 = texture (u_DepthMap, var_TexCoord).x;
+        height_19 = (1.0 - tmpvar_23);
+        vec2 tmpvar_26;
+        tmpvar_26 = (var_TexCoord + tmpvar_25);
+        offset_18 = tmpvar_26;
+        NB1_17 = texture (u_DepthMap, tmpvar_26).x;
+        while (true) {
+          if ((i_16 >= u_ParallaxSteps)) {
+            break;
+          };
+          if ((NB1_17 >= height_19)) {
+            break;
+          };
+          NB0_20 = NB1_17;
+          height_19 = (height_19 - step_22);
+          vec2 tmpvar_27;
+          tmpvar_27 = (offset_18 + delta_21);
+          offset_18 = tmpvar_27;
+          NB1_17 = texture (u_DepthMap, tmpvar_27).x;
+          };
+        offsetBest_15 = offset_18;
+        error_14 = 1.0;
+        t1_13 = height_19;
+        float tmpvar_28;
+        tmpvar_28 = (height_19 + tmpvar_23);
+        t0_12 = tmpvar_28;
+        delta1_11 = (height_19 - NB1_17);
+        delta0_10 = (tmpvar_28 - NB0_20);
+        vec4 tmpvar_29;
+        float cse_30;
+        cse_30 = float(u_ParallaxSteps);
+        tmpvar_29.xy = (tmpvar_25 * cse_30);
+        tmpvar_29.zw = ((tmpvar_25 * cse_30) + var_TexCoord);
+        intersect_9 = tmpvar_29;
+        for (int i_8 = 0; i_8 < 10; i_8++) {
+          float tmpvar_31;
+          tmpvar_31 = abs(error_14);
+          if ((tmpvar_31 <= 0.01)) {
+            break;
+          };
+          float tmpvar_32;
+          tmpvar_32 = (((t0_12 * delta1_11) - (t1_13 * delta0_10)) / (delta1_11 - delta0_10));
+          vec2 tmpvar_33;
+          tmpvar_33 = ((-(tmpvar_32) * intersect_9.xy) + intersect_9.zw);
+          offsetBest_15 = tmpvar_33;
+          float tmpvar_34;
+          tmpvar_34 = (tmpvar_32 - texture (u_DepthMap, tmpvar_33).x);
+          error_14 = tmpvar_34;
+          if ((tmpvar_34 < 0.0)) {
+            delta1_11 = tmpvar_34;
+            t1_13 = tmpvar_32;
+          } else {
+            delta0_10 = tmpvar_34;
+            t0_12 = tmpvar_32;
+          };
+        };
+        tmpvar_7 = offsetBest_15;
+      } else {
+        tmpvar_7 = (((
+          (texture (u_DepthMap, var_TexCoord).x * 0.04)
+         - 0.02) * tmpvar_6.xy) + var_TexCoord);
+      };
+      texcoord_3 = tmpvar_7;
+      vec3 tmpvar_35;
+      tmpvar_35 = normalize((2.0 * (texture (u_NormalMap, tmpvar_7).xyz - 0.5)));
+      vec3 I_36;
+      I_36 = -(L_5);
+      specular_4 = ((texture (u_GlossMap, tmpvar_7).xyz * light_2) * pow (max (
+        dot ((I_36 - (2.0 * (
+          dot (tmpvar_35, I_36)
+         * tmpvar_35))), tmpvar_6)
+      , 0.0), u_GlossExponent));
+      vec3 tmpvar_37;
+      tmpvar_37 = (light_2 * max (dot (tmpvar_35, L_5), 0.0));
+      light_2 = tmpvar_37;
+      if ((bool(u_PointLight) == bool(0))) {
+        light_2 = (tmpvar_37 * textureProj (u_ShadowMap, gl_TexCoord[2]).x);
+      };
+    };
+  };
+  light_2 = max (vec3(0.0, 0.0, 0.0), light_2);
+  float tmpvar_38;
+  tmpvar_38 = max (light_2.x, max (light_2.y, light_2.z));
+  if ((tmpvar_38 > 1.0)) {
+    light_2 = (light_2 * (1.0/(tmpvar_38)));
+  };
+  diffuse_1 = texture (u_ColorMap, texcoord_3);
+  float tmpvar_39;
+  if ((((u_ShadowMode == 0) || bool(
+    (u_FaceFlags & 4)
+  )) || bool(u_PointLight))) {
+    tmpvar_39 = 1.0;
+  } else {
+    vec3 coord_40;
+    float tmpvar_41;
+    tmpvar_41 = (1.0/(u_ScreenWidth));
+    float tmpvar_42;
+    tmpvar_42 = (1.0/(u_ScreenHeight));
+    vec3 tmpvar_43;
+    tmpvar_43 = (gl_TexCoord[2].xyz / gl_TexCoord[2].w);
+    coord_40.z = tmpvar_43.z;
+    coord_40.x = clamp (tmpvar_43.x, tmpvar_41, (1.0 - tmpvar_41));
+    coord_40.y = clamp (tmpvar_43.y, tmpvar_42, (1.0 - tmpvar_42));
+    coord_40.x = clamp (coord_40.x, 0.0, 1.0);
+    vec4 tmpvar_44;
+    tmpvar_44 = texture (u_ShadowMap, coord_40);
+    if ((u_ShadowMode > 1)) {
+      vec3 tmpvar_45;
+      tmpvar_45.xz = vec2(0.0, 0.0);
+      tmpvar_45.y = tmpvar_42;
+      vec4 tmpvar_46;
+      tmpvar_46 = texture (u_ShadowMap, (coord_40 + tmpvar_45));
+      vec3 tmpvar_47;
+      tmpvar_47.z = 0.0;
+      tmpvar_47.x = tmpvar_41;
+      tmpvar_47.y = tmpvar_42;
+      vec4 tmpvar_48;
+      tmpvar_48 = texture (u_ShadowMap, (coord_40 + tmpvar_47));
+      vec3 tmpvar_49;
+      tmpvar_49.yz = vec2(0.0, 0.0);
+      tmpvar_49.x = tmpvar_41;
+      vec4 tmpvar_50;
+      tmpvar_50 = texture (u_ShadowMap, (coord_40 + tmpvar_49));
+      if ((u_ShadowMode > 2)) {
+        vec3 tmpvar_51;
+        tmpvar_51.yz = vec2(0.0, 0.0);
+        tmpvar_51.x = -(tmpvar_41);
+        vec3 tmpvar_52;
+        tmpvar_52.z = 0.0;
+        tmpvar_52.x = -(tmpvar_41);
+        tmpvar_52.y = -(tmpvar_42);
+        vec3 tmpvar_53;
+        tmpvar_53.xz = vec2(0.0, 0.0);
+        tmpvar_53.y = -(tmpvar_42);
+        vec3 tmpvar_54;
+        tmpvar_54.z = 0.0;
+        tmpvar_54.x = tmpvar_41;
+        tmpvar_54.y = -(tmpvar_42);
+        vec3 tmpvar_55;
+        tmpvar_55.z = 0.0;
+        tmpvar_55.x = -(tmpvar_41);
+        tmpvar_55.y = tmpvar_42;
+        tmpvar_39 = (((
+          ((((
+            ((tmpvar_44.x + tmpvar_46.x) + tmpvar_48.x)
+           + tmpvar_50.x) + texture (u_ShadowMap, (coord_40 + tmpvar_51)).x) + texture (u_ShadowMap, (coord_40 + tmpvar_52)).x) + texture (u_ShadowMap, (coord_40 + tmpvar_53)).x)
+         + texture (u_ShadowMap, 
+          (coord_40 + tmpvar_54)
+        ).x) + texture (u_ShadowMap, (coord_40 + tmpvar_55)).x) * 0.11);
+      } else {
+        tmpvar_39 = (((
+          (tmpvar_44.x + tmpvar_46.x)
+         + tmpvar_48.x) + tmpvar_50.x) * 0.25);
+      };
+    } else {
+      tmpvar_39 = tmpvar_44.x;
+    };
+  };
+  vec3 tmpvar_56;
+  tmpvar_56 = (light_2 * tmpvar_39);
+  light_2 = tmpvar_56;
+  diffuse_1.xyz = (diffuse_1.xyz * tmpvar_56);
+  diffuse_1.xyz = (diffuse_1.xyz + specular_4);
+  if ((bool((u_FaceFlags & 64)) && (diffuse_1.w <= 0.5))) {
+    discard;
+    return;
+  };
+  if (bool((u_FaceFlags & 32))) {
+    diffuse_1.w = 0.5;
+  };
+  diffuse_1.xyz = (diffuse_1.xyz * tmpvar_56);
+  diffuse_1.xyz = (diffuse_1.xyz * 2.0);
+  gl_FragColor = diffuse_1;
+}
+
+
+// inputs: 4, stats: 148 alu 23 tex 19 flow
